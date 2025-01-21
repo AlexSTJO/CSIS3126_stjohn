@@ -1,0 +1,47 @@
+Orca
+Data Orchestration Tool
+Simplify hosting for users that are not familiar with the cloud (Potential problem here with compelexity of set up of permission if using IAM Role). 
+Cut costs by scheduling EC2 Instances
+
+Frontend:
+
+Framework:
+Features: VUEJS
+Upload scripts.
+Display script outputs.
+Configure and schedule script execution.
+User authentication 
+
+
+Backend:
+
+Language: Python (using Flask or FastAPI).
+Features:
+Handle uploads.
+Store scripts. 
+Run scripts securely in a sandboxed environment.
+Retrieve and return script outputs.
+Schedule tasks (apscheduler and boto3).
+Cloud Infrastructure:
+
+Hosting: AWS.
+Services:
+S3: Store uploaded scripts and outputs.
+Lambda or ECS: Run scripts in a controlled environment.
+DynamoDB or RDS: Store metadata like scripts, outputs, and schedules.
+
+
+
+Authentication:
+Utilize an IAM role and create a config file with permissions as well as a guide for users to connect
+Store hashed role
+
+Questions
+
+How to have multiple files running?
+
+Whether to use lambda or ecs
+
+How to connect aws account to runner -> IAM ROLE or ACCESS KEY? 
+
+Load Balancer????
