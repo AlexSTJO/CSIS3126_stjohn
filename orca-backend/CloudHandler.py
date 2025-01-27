@@ -70,23 +70,35 @@ def ec2_connect(session, bucket_name, ec2_instance, file_path):
                     print(stderr)
                     return stderr
 
-if __name__ == "__main__":
-    secret_csv = '../secrets.csv'
+def get_db_credentials():
+    client = boto3.client('secretsmanager', region_name='us-east-2')
+
+    try:
+        secret_name = "arn:aws:secretsmanager:us-east-2:021891597224:secret:rds!db-7c96e64c-daa8-4cb5-b2e9-db6af5dca6e0-eZRtck"
+        response = client.get_secret_value(SecretId=secret_name)
+        secret = json.loads(response['SecretString'])
+        return {
+            "user": secret["username"],
+            "password": secret["password"],
+        }
+    except Exception as e:
+        print(f"Error retrieving secrets: {e}")
+        raise
+
+def get_encryption_key():
+    client = boto3.client('secretsmanager', region_name='us-east-2')
+
+    try:
+        secret_name = "orca/secrets"
+        response = client.get_secret_value(SecretId=secret_name)
+        secret = json.loads(response['SecretString'])
+        return secret["uAuth"]
+    except Exception as e:
+        print(f"Error retrieving secrets: {e}")
+        raise
+
+
+
     
-    with open(secret_csv, mode='r',encoding='utf-8-sig') as file:
-        reader = csv.DictReader(file)
-        secrets = next(reader)
-
-    access_key = secrets['Access key ID']
-    secret_access_key = secrets['Secret access key']
-    bucket = secrets["Bucket"]
-    ec2_instance = secrets["Instance ID"]
-
-    session = session_create(access_key, secret_access_key)
-
-    file_path = "test.py"
-
-    upload_file(file_path=file_path,session=session,bucket_name=bucket)
-    ec2_connect(session=session, bucket_name=bucket, ec2_instance=ec2_instance,file_path=file_path)
 
 

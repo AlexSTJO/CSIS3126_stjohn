@@ -4,19 +4,22 @@ import mysql.connector
 import jwt
 import datetime
 from flask_cors import CORS
+from CloudHandler import get_db_credentials, get_encryption_key
+from dotenv import load_dotenv
+import os
 
+load_dotenv()
 app = Flask(__name__)
 CORS(app)
-
-SECRET_KEY = ""
-
+SECRET_KEY = get_encryption_key()
 # Database connection
 def connect_to_db():
+    creds = get_db_credentials()
     return mysql.connector.connect(
-        host="localhost",
-        user="",
-        password="",
-        database="orca"
+        host=os.getenv("DB_HOST"),
+        user=creds["user"],
+        password=creds["passwords"],
+        database=os.getenv("DB_NAME")
     )
 
 # Login endpoint
@@ -30,19 +33,19 @@ def login():
     cursor = conn.cursor(dictionary=True)
 
     try:
-        cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
+        cursor.execute("SELECT * FROM users WHERE Email = %s", (email,))
         user = cursor.fetchone()
-        if user and check_password_hash(user['password'], password):
+        if user and check_password_hash(user['PasswordEncrypted'], password):
             token = jwt.encode(
                 {
-                    'id': user['id'],
-                    'email': user['email'],
+                    'id': user['UserID'],
+                    'email': user['Email'],
                     'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1) 
                 },
                 SECRET_KEY,
                 algorithm="HS256"
             )
-            return jsonify({"token": token, "user_id": user['id']}), 200 
+            return jsonify({"token": token, "user_id": user['UserID']}), 200 
         else:
             return jsonify({"error": "Invalid email or password"}), 401
     finally:
@@ -63,7 +66,7 @@ def register():
     cursor = conn.cursor()
 
     try:
-        cursor.execute("INSERT INTO users (email, password) VALUES (%s, %s)", (email, hashed_password))
+        cursor.execute("INSERT INTO users (Email, PasswordEncrypted, EncryptionKeyID) VALUES (%s, %s, %s)", (email, hashed_password, 'none'))
         conn.commit()
         return jsonify({"message": "User registered successfully!"}), 201
     except Exception as e:
@@ -96,6 +99,32 @@ def upload_script():
         cursor.close()
         conn.close()
 
+@app.route('/upload-credentials', methods=['POST'])
+def upload_credentials():
+    user_id = request.form.get('user_id')
+    access_key = request.form.get('access_key')
+    secret_key = request.form.get('secret_key')
+    encryption_key_id = 'none'
+
+    if not user_id or not access_key or not secret_key:
+        return jsonify({"error": "Missing Credentials or Invalid Token"}), 400
+    
+    conn = connect_to_db()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute(
+        "INSERT INTO CloudCredentials (UserID, AccessKey, SecretKeyEncrypted, EncryptionKeyId) VALUES (%s,%s,%s,%s)",
+        (user_id, access_key, secret_key, encryption_key_id)
+        )
+        conn.commit()
+        return jsonify({"message": "Credentials Uploaded"}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+    
+    finally:
+        cursor.close()
+        conn.close()
 
 if __name__ == '__main__':
     app.run(debug=True)
