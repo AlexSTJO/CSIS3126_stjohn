@@ -5,20 +5,28 @@ import jwt
 import datetime
 from flask_cors import CORS
 from CloudHandler import get_db_credentials, get_encryption_key
+from Utils import encrypt_secret, decrypt_secret
 from dotenv import load_dotenv
 import os
 
 load_dotenv()
 app = Flask(__name__)
 CORS(app)
-SECRET_KEY = get_encryption_key()
+SECRET_KEY = get_encryption_key(os.getenv('E_KEY_ID_JWT'))
+    
 # Database connection
 def connect_to_db():
-    creds = get_db_credentials()
+    if os.getenv("DB_HOST") != "localhost":
+        creds = get_db_credentials()
+    else:
+        creds = {
+            "user": os.getenv("DB_USER"),
+            "password": os.getenv("DB_PASS")
+        }
     return mysql.connector.connect(
         host=os.getenv("DB_HOST"),
         user=creds["user"],
-        password=creds["passwords"],
+        password=creds["password"],
         database=os.getenv("DB_NAME")
     )
 
@@ -56,7 +64,6 @@ def login():
 # Register endpoint
 @app.route('/register', methods=['POST'])
 def register():
-    print("hit")
     data = request.get_json()
     email = data['email']
     password = data['password']
@@ -93,8 +100,10 @@ def upload_script():
         )
         conn.commit()
         return jsonify({"message": "Script uploaded successfully!"}), 201
+    
     except Exception as e:
         return jsonify({"error": str(e)}), 400
+    
     finally:
         cursor.close()
         conn.close()
@@ -104,10 +113,14 @@ def upload_credentials():
     user_id = request.form.get('user_id')
     access_key = request.form.get('access_key')
     secret_key = request.form.get('secret_key')
-    encryption_key_id = 'none'
+    encryption_key_id = os.getenv('E_KEY_ID_CLOUD')
+    encryption_key = get_encryption_key(encryption_key_id)
+
 
     if not user_id or not access_key or not secret_key:
         return jsonify({"error": "Missing Credentials or Invalid Token"}), 400
+    
+    secret_key = encrypt_secret(secret_key, encryption_key) 
     
     conn = connect_to_db()
     cursor = conn.cursor()

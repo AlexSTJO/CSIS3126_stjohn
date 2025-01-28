@@ -1,14 +1,14 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import MainMenu from '../components/MainMenu.vue';
+import HubPage from '../components/HubPage.vue';
 import LoginPage from '../components/LoginPage.vue';
-import RegisterPage from '../components/RegisterPage.vue'
-import MainProcesses from '@/components/MainProcesses.vue';
+import RegisterPage from '../components/RegisterPage.vue';
+import LinkPage from '../components/LinkPage.vue'
 
 const routes = [
-  { path: '/', component: MainMenu },
+  { path: '/', component: HubPage },
   { path: '/login', component:LoginPage },
   { path: '/register', component:RegisterPage},
-  { path: '/processes', component:MainProcesses}
+  { path: '/link', component:LinkPage }
 ];
 
 const router = createRouter({

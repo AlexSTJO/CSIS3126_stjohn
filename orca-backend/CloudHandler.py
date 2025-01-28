@@ -1,7 +1,7 @@
 import csv
 import boto3
 import time
-
+import os
 # Session Creator
 def session_create(access_key, secret_access_key,):
     session = boto3.Session(
@@ -74,7 +74,7 @@ def get_db_credentials():
     client = boto3.client('secretsmanager', region_name='us-east-2')
 
     try:
-        secret_name = "arn:aws:secretsmanager:us-east-2:021891597224:secret:rds!db-7c96e64c-daa8-4cb5-b2e9-db6af5dca6e0-eZRtck"
+        secret_name = os.getenv("DB_SECRET_NAME")
         response = client.get_secret_value(SecretId=secret_name)
         secret = json.loads(response['SecretString'])
         return {
@@ -85,20 +85,25 @@ def get_db_credentials():
         print(f"Error retrieving secrets: {e}")
         raise
 
-def get_encryption_key():
-    client = boto3.client('secretsmanager', region_name='us-east-2')
+def get_encryption_key(encryption_key_id):
+    secret_name = os.getenv("SECRET_NAME")
+    if secret_name != "":
 
-    try:
-        secret_name = "orca/secrets"
-        response = client.get_secret_value(SecretId=secret_name)
-        secret = json.loads(response['SecretString'])
-        return secret["uAuth"]
-    except Exception as e:
-        print(f"Error retrieving secrets: {e}")
-        raise
-
-
-
+        client = boto3.client('secretsmanager', region_name='us-east-2')
+        
+        try:
+            secret_name = "orca/secrets"
+            response = client.get_secret_value(SecretId=secret_name)
+            secret = json.loads(response['SecretString'])
+            return secret[encryption_key_id]
+        except Exception as e:
+            print(f"Error retrieving secrets: {e}")
+            raise
+    else:
+        return os.getenv("E_KEY")
+    
+if __name__ == "__main__":
+    print(get_encryption_key())
     
 
 

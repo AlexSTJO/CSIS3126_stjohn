@@ -30,7 +30,9 @@
     </div>
 </template>
 <script>
-import "@/assets/css/credential_upload.css"
+import "@/assets/css/credential_upload.css";
+import { API_ENDPOINTS } from './constants.js';
+
 export default {
   data () {
     return {
@@ -57,7 +59,7 @@ export default {
           access_key: this.accessKey,
           secret_key: this.secretKey
         })
-        const response = await fetch("https://astjo.site/api/upload-credentials", {
+        const response = await fetch(API_ENDPOINTS.UPLOAD_CREDENTIALS, {
           method: "POST",
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",

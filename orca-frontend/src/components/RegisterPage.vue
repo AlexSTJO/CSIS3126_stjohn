@@ -38,6 +38,7 @@
 
 <script>
 import "@/assets/css/auth-form.css";
+import {API_ENDPOINTS} from './constants.js';
 
 export default {
   data() {
@@ -78,7 +79,7 @@ export default {
 
       try {
         this.loading = true;
-        const response = await fetch("https://astjo.site/api/register", {
+        const response = await fetch(API_ENDPOINTS.REGISTER, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
