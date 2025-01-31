@@ -2,6 +2,8 @@ import csv
 import boto3
 import time
 import os
+import boto3
+import botocore.exceptions
 # Session Creator
 def session_create(access_key, secret_access_key):
     session = boto3.Session(
@@ -132,40 +134,45 @@ def bucket_create(session, bucket_name, region_name):
 
 def ec2_create(session, region_name):
     ec2_client = session.client("ec2", region_name=region_name)
-        
+      
     # Create security group
     create_and_configure_vpc(ec2_client, region_name)
-    '''try:
-        response = ec2_client.create_security_group(
-        GroupName='orca-sg',
-        Description='Security Group for Orca EC2',
-        )
-    except botocore.exceptions.ClientError as e:
-        print(f"Error: {e}")'''
     # Create IAM Role
     # Create Key Pair
     # Create EC2
 
 def create_and_configure_vpc(ec2_client, region_name):
+    
     try:
-        response = ec2_client.create_vpc(CidrBlock='10.0.0.0/16')
-        vpc_id = response["Vpc"]["VpcID"]
+        response = ec2_client.create_vpc(CidrBlock='10.0.0.0/24',
+            TagSpecifications=[
+            {
+                "ResourceType": "vpc",
+                "Tags": [
+                {"Key": "Name", "Value": "Orca"}
+            ]
+        }
+        ])
+        vpc_id = response["Vpc"]["VpcId"]
         print(f"VPC Created: {vpc_id}")
         
         ec2_client.modify_vpc_attribute(VpcId=vpc_id, EnableDnsSupport={'Value': True})
         ec2_client.modify_vpc_attribute(VpcId=vpc_id, EnableDnsHostnames={'Value': True})
-    except botocore.exceptions.ClientError as e:
-        print(f"Error: {e}")
 
-    try:
         igw_response = ec2_client.create_internet_gateway()
         internet_gateway_id = igw_response['InternetGateway']['InternetGatewayId']
         print(f"Internet Gateway created: {internet_gateway_id}")
+
+        ec2_client.attach_internet_gateway(
+        InternetGatewayId=internet_gateway_id,
+        VpcId=vpc_id
+        )
+
        
         # Create a subnet in the VPC
         subnet_response = ec2_client.create_subnet(
             VpcId=vpc_id,
-            CidrBlock='9.0.1.0/24',
+            CidrBlock='10.0.0.0/26',
             AvailabilityZone=f'{region_name}a'  
         )
 
@@ -182,7 +189,7 @@ def create_and_configure_vpc(ec2_client, region_name):
             GatewayId=internet_gateway_id
         )
         
-        ec2_client.associate_route_table(SubnetID=subnet_id, RouteTableId=route_table_id)
+        ec2_client.associate_route_table(SubnetId=subnet_id, RouteTableId=route_table_id)
         print("Route table associated with the subnet")
 
         ec2_client.modify_subnet_attribute(SubnetId=subnet_id, MapPublicIpOnLaunch={'Value': True})
@@ -191,7 +198,7 @@ def create_and_configure_vpc(ec2_client, region_name):
         print("VPC Configurations Done")
 
     except botocore.exceptions.ClientError as e:
-        print("Error: {e}")
+        print(f"Error: {e}")
 
           
         
@@ -207,6 +214,7 @@ def pull_creds():
 
 if __name__ == "__main__":
     creds = pull_creds()
-    session_create(creds["access_key"], creds["secret_access_key"])
-
+    print(creds)
+    session = session_create(creds["access_key"], creds["secret_access_key"])
+    ec2_create(session, "us-east-2")
 
