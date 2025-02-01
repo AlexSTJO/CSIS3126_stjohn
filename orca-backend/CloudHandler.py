@@ -134,16 +134,44 @@ def bucket_create(session, bucket_name, region_name):
 
 def ec2_create(session, region_name):
     ec2_client = session.client("ec2", region_name=region_name)
-      
-    # Create security group
-    create_and_configure_vpc(ec2_client, region_name)
-    # Create IAM Role
-    # Create Key Pair
-    # Create EC2
+    vpc_info = create_and_configure_vpc(ec2_client, region_name)
+    create_key_pair(ec2_client)
+    security_group_id = create_security_group(ec2_client, vpc_id)
+
+    vpc_id = vpc_info["Vpc"]
+    subnet_id = vpc_info["Subnet"]
+
+    try:    
+        session.client('ssm', region_name="us-east-2")
+        ami_response = ssm_client.get_parameter(
+            Name='/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
+        )
+        amazon_linux_ami_id = ami_response['Parameter']['Value']
+
+        instance_response = ec2_client.run_instances(
+            ImageId=amazon_linux_ami_id,  # Replace with a valid AMI ID
+            InstanceType='t2.micro',  # Change as needed
+            KeyName='orca-ec2-key',
+            SecurityGroupIds=[security_group_id],
+            SubnetId=subnet_id,
+            MinCount=1,
+            MaxCount=1,
+            TagSpecifications=[
+                {
+                    'ResourceType': 'instance',
+                    'Tags': [{'Key': 'Name', 'Value': 'orca-runner'}]
+                }
+            ]
+        )
+
+        instance_id = instance_response['Instances'][0]['InstanceId']
+        print(f"EC2 Instance launched: {instance_id}")
+    
+    except botocore.exceptions.ClientError as e:
+        print(f"Error: {e}")
 
 def create_and_configure_vpc(ec2_client, region_name):
-    
-    try:
+     try:
         response = ec2_client.create_vpc(CidrBlock='10.0.0.0/24',
             TagSpecifications=[
             {
@@ -196,13 +224,57 @@ def create_and_configure_vpc(ec2_client, region_name):
         
         print("Auto-assign public IP enabled for the subnet.")
         print("VPC Configurations Done")
+        return {"Vpc": vpc_id,
+                "Subnet", subnet_id}
 
     except botocore.exceptions.ClientError as e:
         print(f"Error: {e}")
 
-          
+def create_key_pair(ec2_client):   
+    try:
+        key_pair_response = ec2_client.create_key_pair(KeyName='orca-ec2-key')
+        private_key = key_pair_response['KeyMaterial']
+
+        with open('MyKeyPair.pem', 'w') as key_file:
+            key_file.write(private_key)
+        print("Key pair created and saved as orca-ec2-key.pem")
+
+    except botocore.exceptions.ClientError as e:
+        print(f"Error as {e}")
+
+def create_security_group(ec2_client,vpc_id):
+    try:
+        security_group_response = ec2_client.create_security_group(
+            GroupName='SSM-Enabled-SecurityGroup',
+            Description='Security group to allow SSM and SSH access',
+            VpcId=vpc_id 
+        )
+        security_group_id = security_group_response['GroupId']
+        print(f"Security group created: {security_group_id}")
         
- 
+        ec2_client.authorize_security_group_ingress(
+            GroupId=security_group_id,
+            IpPermissions=[
+                {
+                    'IpProtocol': 'tcp',
+                    'FromPort': 443,
+                    'ToPort': 443,
+                    'IpRanges': [{'CidrIp': '0.0.0.0/0'}]  # Allow SSM HTTPS communication from any IP
+                },
+                {
+                    'IpProtocol': 'tcp',
+                    'FromPort': 22,
+                    'ToPort': 22,
+                    'IpRanges': [{'CidrIp': '0.0.0.0/0'}]  # Optional: Allow SSH access from any IP
+                }
+            ]
+        )
+        print("Inbound rules added for SSM and SSH.")
+        return security_group_id
+    except botocore.exceptions.ClientError as e:
+        print(f"Error as {e}")
+
+
 def pull_creds():
     with open('../secrets.csv', newline='', encoding='utf-8-sig') as csvfile:
         reader = csv.DictReader(csvfile)
