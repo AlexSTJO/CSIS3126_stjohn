@@ -313,7 +313,7 @@ def resource_existence(ec2_client):
     if vpcs:
         existence['Vpc'] = vpcs[0]['VpcId']
         vpc_filter = {'Name': 'vpc-id', 'Values': [existence['Vpc']]}
-
+       
         response = ec2_client.describe_route_tables(Filters = [vpc_filter])
         route_tables = response.get('RouteTables', [])
         if route_tables:
@@ -341,19 +341,25 @@ def resource_existence(ec2_client):
     if key_pairs:
         existence['KeyPair'] = key_pairs[0]['KeyPairId']
 
-    response = ec2_client.describe_security_groups(
-        Filters=[vpc_filter]
-    )
-    security_groups = response.get('SecurityGroups',[])
-    if security_groups:
-        existence['SecurityGroup'] = security_groups[0]['GroupId']
+    if existence['Vpc']: 
+        response = ec2_client.describe_security_groups(
+            Filters=[vpc_filter]
+        )
+        security_groups = response.get('SecurityGroups',[])
+        if security_groups:
+            existence['SecurityGroup'] = security_groups[0]['GroupId']
 
     response = ec2_client.describe_instances(
         Filters=[
-            {'Name': 'tag:Name', 'Values': ['orca-runner']}
+            {'Name': 'tag:Name', 'Values': ['orca-runner']},
+            {'Name': 'instance-state-name', 'Values': ['pending', 'running', 'stopping', 'stopped']}
         ]
     )
     
+    instances = response.get('Reservations', [])
+
+    if instances:
+        existence["Ec2"] = instances[0]["Instances"][0]["InstanceId"]
     return existence
     
 if __name__ == '__main__':
@@ -362,4 +368,3 @@ if __name__ == '__main__':
     session = session_create(creds['access_key'], creds['secret_access_key'])
     ec2_client = session.client('ec2', region_name='us-east-2')
     ec2_create(session, 'us-east-2')
-
