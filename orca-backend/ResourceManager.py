@@ -1,6 +1,7 @@
 import boto3
 import botocore.exceptions
 import csv
+import time
 
 class AWSResourceManager:
     def __init__(self, access_key, secret_access_key, region_name):
@@ -12,9 +13,10 @@ class AWSResourceManager:
         self.region_name = region_name
         self.ec2_client = self.session.client('ec2')
         self.ssm_client = self.session.client('ssm')
+        self.s3_client = self.session.client('s3')
 
     def resource_existence(self):
-        resources = ['Vpc', 'RouteTable', 'Subnet', 'InternetGateway', 'KeyPair', 'SecurityGroup', 'Ec2']
+        resources = ['Vpc', 'RouteTable', 'Subnet', 'InternetGateway', 'KeyPair', 'SecurityGroup', 'Ec2', 'S3']
         existence = dict.fromkeys(resources, None)
 
         response = self.ec2_client.describe_vpcs(
@@ -59,7 +61,13 @@ class AWSResourceManager:
         instances = response.get('Reservations', [])
         if instances:
             existence['Ec2'] = instances[0]['Instances'][0]['InstanceId']
-
+        
+        response = self.s3_client.list_buckets()
+        buckets = response.get('Buckets', [])
+        for bucket in buckets:
+            if bucket['Name'].startswith("orca-s3-"):
+                existence["S3"] = bucket['Name']                
+                    
         return existence
 
     def create_and_configure_vpc(self, existing_resources):
@@ -120,7 +128,6 @@ class AWSResourceManager:
             else:
                 print(f"Route Table Exists: {existing_resources['RouteTable']}")
 
-            print("VPC Configuration Complete")
             return existing_resources
 
         except botocore.exceptions.ClientError as e:
@@ -186,6 +193,34 @@ class AWSResourceManager:
                 print(f"EC2 Instance Exists: {existing_resources['Ec2']}")
         except botocore.exceptions.ClientError as e:
             print(f"Error Creating EC2 Instance: {e}")
+    def generate_unique_bucket_name(self):
+        unique_suffix = str(int(time.time() * 1000))  
+        return f"orca-s3-{unique_suffix}"
+
+    def create_s3_bucket(self):
+        max_attempts = 5
+        for attempt in range(max_attempts):
+            bucket_name = self.generate_unique_bucket_name()
+            try:
+                response = self.s3_client.create_bucket(
+                    Bucket = bucket_name,
+                    CreateBucketConfiguration={'LocationConstraint': self.region_name}
+                )
+
+                print(f"S3 Bucket Created: {bucket_name}")
+                return bucket_name
+            except botocore.exceptions.ClientError as e:
+                error_code = e.response['Error']['Code']
+                if error_code == 'BucketAlreadyExists':
+                    print(f"Bucket {bucket_name} already exists. Retrying with a new name...")
+                elif error_code == 'BucketAlreadyOwnedByYou':
+                    print(f"Bucket {bucket_name} already exists in your account.")
+                    return bucket_name, e.response
+                else:
+                    print(f"Unexpected error: {e}")
+                    raise
+
+        raise Exception(f"Failed to create a unique S3 bucket after {max_attempts} attempts.")
 
 def pull_creds():
     with open('../secrets.csv', newline='', encoding='utf-8-sig') as csvfile:
@@ -197,7 +232,7 @@ def pull_creds():
     return creds
 
 if __name__ == "__main__":
-    creds = pull_creds()  # Implement the function to retrieve credentials
+    creds = pull_creds()
     resource_manager = AWSResourceManager(creds['access_key'], creds['secret_access_key'], "us-east-2")
 
     existing_resources = resource_manager.resource_existence()
@@ -205,8 +240,15 @@ if __name__ == "__main__":
 
     if not existing_resources['KeyPair']:
         resource_manager.create_key_pair()
+    else:
+        print(f"Key Pair Exists: {existing_resources['KeyPair']}")
 
     if not existing_resources['SecurityGroup']:
         existing_resources['SecurityGroup'] = resource_manager.create_security_group(existing_resources['Vpc'])
-
+    else:
+        print(f"Security Group Exists: {existing_resources['SecurityGroup']}")
+    if not existing_resources['S3']:
+        existing_resources["S3"] = resource_manager.create_s3_bucket()
+    else:
+         print(f"S3 Bucket Exists: {existing_resources['S3']}")
     resource_manager.create_ec2_instance(existing_resources)
