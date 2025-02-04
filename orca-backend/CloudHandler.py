@@ -107,31 +107,6 @@ def get_encryption_key(encryption_key_id):
     
 
 
-def cloud_setup(bucket_name, ec2_name, access_key, secret_access_key, region_name):
-    session = session_create(access_key, secret_access_key)
-    
-    bucket_success = bucket_create(session, bucket_name, region_name)
-    
-
-def bucket_create(session, bucket_name, region_name):
-
-    s3_client = session.client('s3', region_name=region_name)
-    
-    try:
-        response = s3_client.create_bucket(Bucket=bucket_name)
-        print('Bucket created successfully', response)
-
-    except botocore.exceptions.ClientError as e:
-        error_code  = e.response['Error']['Code']
-
-    if error_code == 'BucketAlreadyExists':
-        print(f"Error: The bucket name {bucket_name} is already taken and owned by another AWS account.")
-    elif error_code == 'BucketAlreadyOwnedByYou':
-        print(f"Error: The bucket {bucket_name} already exists in your account.")
-    else:
-        print(f"Unexpected Error: {e}")
-
-
     
 if __name__ == '__main__':
     creds = pull_creds()
