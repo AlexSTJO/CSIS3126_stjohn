@@ -4,7 +4,7 @@ import csv
 import time
 
 class AWSResourceManager:
-    def __init__(self, access_key, secret_access_key, region_name):
+    def __init__(self, access_key, secret_access_key, region_name, bucket_name, intance_id):
         self.session = boto3.Session(
             aws_access_key_id=access_key,
             aws_secret_access_key=secret_access_key,

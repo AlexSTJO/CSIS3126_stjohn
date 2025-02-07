@@ -1,16 +1,15 @@
 import boto3
-import boto3.exceptions
-
+import botocore.exceptions
+import csv
 class OrcaRunner:
-    def __init__(self, session):
-        self.session = boto3.Session(
-            aws_access_key_id=access_key,
-            aws_secret_access_key=secret_access_key,
-            region_name=region_name
-        )
-        self.region_name = region_name
-        self.ec2_client = self.session.client('ec2')
-        self.ssm_client = self.session.client('ssm')
+    def __init__(self, session, bucket_name, instance_id):
+        self.ec2_client = session.client('ec2')
+        self.ssm_client = session.client('ssm')
+        self.s3_client = session.client('s3') 
+        self.bucket_name = bucket_name
+        self.instance_id = instance_id
+
+
     def invoke_command(self, bucket_name, file_path):
         ssm_client = self.ssm_client
 
@@ -57,6 +56,26 @@ class OrcaRunner:
                         print('Error Output:')
                         print(stderr)
                         return stderr
+
+
+def pull_creds():
+    with open('../secrets.csv', newline='', encoding='utf-8-sig') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            creds = {'access_key': row['Access key ID'],
+                     'secret_access_key': row['Secret access key']}
+
+    return creds
+
+if __name__ == "__main__":
+    creds = pull_creds()
+
+    session = boto3.Session(
+        aws_access_key_id=creds["access_key"],
+        aws_secret_access_key=creds["secret_access_key"],
+        region_name="us-east-2"
+    )
     
-    def create_project(self):
-        # Creates a new folder in s3 where scripts will be stored
+    runner = OrcaRunner(session, "orca-s3-1738617758188", None)
+    runner.create_project("foobar")
+
