@@ -57,7 +57,16 @@ def create_session(user_id):
     else:
         return None
         
-
+def retrieve_token_info(token):
+    try:
+        decoded = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        return decoded
+    except jwt.ExpiredSignatureError:
+        print('here')
+        raise jwt.ExpiredSignatureError("Token has expired")
+    except jwt.InvalidTokenError:
+        raise jwt.InvalidTokenError("Invalid token")
+    
 # Login endpoint
 @app.route('/login', methods=['POST'])
 def login():
@@ -76,7 +85,7 @@ def login():
                 {
                     'id': user['UserID'],
                     'email': user['Email'],
-                    'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1) 
+                    'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=3) 
                 },
                 SECRET_KEY,
                 algorithm="HS256"
@@ -86,7 +95,7 @@ def login():
                 link = "true"
             else:
                 link = "false"
-            return jsonify({"token": token, "user_id": user['UserID'], "link": link}), 200 
+            return jsonify({"token": token, "link": link}), 200 
         else:
             return jsonify({"error": "Invalid email or password"}), 401
     finally:
@@ -117,7 +126,6 @@ def register():
 
 @app.route('/upload-credentials', methods=['POST'])
 def upload_credentials():
-    user_id = request.form.get('user_id')
     access_key = request.form.get('access_key')
     secret_key = request.form.get('secret_key')
     region_name = request.form.get('region')
@@ -125,14 +133,24 @@ def upload_credentials():
     encryption_key = get_encryption_key(encryption_key_id)
 
 
-    if not user_id or not access_key or not secret_key:
+    if not access_key or not secret_key:
         return jsonify({"error": "Missing Credentials or Invalid Token"}), 400
     
     secret_key = encrypt_secret(secret_key, encryption_key) 
-    conn = connect_to_db()
-    cursor = conn.cursor()
+    
+    token = request.headers.get("Authorization")
+    if not token:
+        return jsonify({"error": "Authorization Token Missing"}), 401
+
+    token = token.split(" ")[1] if "Bearer " in token else token
 
     try:
+        decoded_token = retrieve_token_info(token)
+        user_id = decoded_token.get("id")
+
+        conn = connect_to_db()
+        cursor = conn.cursor()
+
         cursor.execute(
         "INSERT INTO CloudCredentials (UserID, AccessKey, SecretKeyEncrypted, EncryptionKeyId, RegionName) VALUES (%s,%s,%s,%s,%s)",
         (user_id, access_key, secret_key, encryption_key_id,region_name,)
@@ -158,7 +176,7 @@ def upload_credentials():
 
  
 
-@app.route('/cloud-resource-creation/<user_id>', methods=['GET'])
+@app.route('/cloud-resource-creation', methods=['GET'])
 def cloud_link(): 
     try:
         session = create_session(user_id)
@@ -174,11 +192,18 @@ def cloud_link():
     finally:
         cursor.close()
         conn.close()
-@app.route('/credential-reset/<user_id>', methods=['GET'])
-def credential_reset(user_id):
-    conn = connect_to_db()
-    cursor = conn.cursor()
+@app.route('/credential-reset', methods=['GET'])
+def credential_reset():
+    token = request.headers.get("Authorization")
+    if not token:
+        return jsonify({"error": "Authorization Token Missing"}), 401
+
+    token = token.split(" ")[1] if "Bearer " in token else token
     try:
+        conn = connect_to_db()
+        cursor = conn.cursor()
+        decoded_token = retrieve_token_info(token)
+        user_id = decoded_token.get("id")
         cursor.execute(
            "DELETE FROM CloudCredentials WHERE UserID = %s",
             (user_id,)
@@ -188,11 +213,18 @@ def credential_reset(user_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
-@app.route('/get-account-info/<user_id>', methods=['GET'])
-def get_account_info(user_id):
-    conn = connect_to_db()
-    cursor = conn.cursor()
+@app.route('/get-account-info', methods=['GET'])
+def get_account_info():
+    token = request.headers.get('Authorization')
+    if not token:
+        return jsonify({"error": "Authorization Token Missing"}), 401
+
+    token = token.split(" ")[1] if "Bearer " in token else token
     try:
+        conn = connect_to_db()
+        cursor = conn.cursor()
+        decoded_token = retrieve_token_info(token)
+        user_id = decoded_token.get("id") 
         linked = "False"
         # Query the Users table
         cursor.execute('SELECT Email FROM users WHERE UserID = %s', (user_id,))

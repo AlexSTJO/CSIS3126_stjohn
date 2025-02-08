@@ -1,7 +1,7 @@
 <template>
     <div>
         <!-- Navbar -->
-        <nav class="navbar">
+    <nav class="navbar">
             <div class="navbar-left">
                 <img src="../assets/orca.png" alt="Logo" class="navbar-logo" />
             </div>
@@ -68,19 +68,13 @@ export default {
             }
         },
         async fetchAccountInfo() {
-            const userId = sessionStorage.getItem("user_id");
-
-            if (!userId) {
-                console.error("User ID is missing.");
-                this.errorMessage = "User ID is missing.";
-                this.loading = false;
-                return;
-            }
-
             try {
-                console.log(`${API_ENDPOINTS.GET_ACCOUNT_INFO}/${userId}`);
-                const response = await fetch(`${API_ENDPOINTS.GET_ACCOUNT_INFO}/${userId}`, {
-                    method: "GET"
+                const token = sessionStorage.getItem("token")
+                const response = await fetch(`${API_ENDPOINTS.GET_ACCOUNT_INFO}`, {
+                    method: "GET",
+                    headers: {
+                      "Authorization": `Bearer ${token}`
+                    }
                 });
 
                 if (!response.ok) {
@@ -96,19 +90,18 @@ export default {
             }
         },
         async resetCredentials() {
-            const userId = sessionStorage.getItem("user_id");
-
-            if (!userId) {
-                this.errorMessage = "User ID is missing.";
-                return;
-            }
-
+            const token = sessionStorage.getItem("token");
+ 
             try {
                 this.resetMessage = "";  // Clear previous messages
                 this.errorMessage = "";
 
-                const response = await fetch(`${API_ENDPOINTS.CREDENTIAL_RESET}/${userId}`, {
-                    method: "GET"
+                const response = await fetch(`${API_ENDPOINTS.CREDENTIAL_RESET}`, {
+                    method: "GET",
+                    headers: {
+                      "Authorization": `Bearer ${token}`
+                    }
+
                 });
 
                 if (!response.ok) {

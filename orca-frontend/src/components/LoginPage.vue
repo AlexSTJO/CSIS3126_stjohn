@@ -68,7 +68,6 @@ export default {
         const data = await response.json();
         if (response.ok) {
           sessionStorage.setItem('token', data.token);
-          sessionStorage.setItem('user_id', data.user_id);
           sessionStorage.setItem('link_status', data.link)
           this.$router.push('/')
         } else {

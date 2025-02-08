@@ -66,6 +66,7 @@ export default {
     },
     async submitCredentials() {
       try {
+        const token = sessionStorage.getItem("token")
         const params = new URLSearchParams({
           user_id: this.userID,
           access_key: this.accessKey,
@@ -77,6 +78,7 @@ export default {
           method: "POST",
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",
+            "Authorization": `Bearer ${token}`
           },
           body: params,
         });
