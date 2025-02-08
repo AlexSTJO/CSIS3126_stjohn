@@ -39,9 +39,16 @@ export const steps = [
         title: "Step 5: Attach the Policy to the User",
         content: `
             Go back to the <strong>"Add user"</strong> page, search for the custom policy you just 
-            created, and select it. Click <strong>"Next"</strong> to review and complete the user 
-            creation process.
+            created, and select it. Click <strong>"Next"</strong> to review and retrieve access key and secret access key
         `
+    },
+    {
+        title: "Step 6: Upload Cloud Credentials",
+        content: `
+            Once you have retrieved the necessary access credentials, proceed to click the button below and upload your credentials to Orca
+        `,
+        requiresUpload: true
     }
+    
 ];
 

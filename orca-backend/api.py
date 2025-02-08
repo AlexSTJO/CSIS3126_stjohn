@@ -41,7 +41,6 @@ def create_session(user_id):
         )
     result = cursor.fetchone()
     if result:
-        print("here")
         access_key, secret_key_encrypted, encryption_key_id, region_name = result
         encryption_key = get_encryption_key(encryption_key_id)
         secret_key = decrypt_secret(secret_key_encrypted, encryption_key)
@@ -84,9 +83,9 @@ def login():
             )
             session = create_session(user["UserID"])
             if session:
-                link = True
+                link = "true"
             else:
-                link = False
+                link = "false"
             return jsonify({"token": token, "user_id": user['UserID'], "link": link}), 200 
         else:
             return jsonify({"error": "Invalid email or password"}), 401
@@ -175,7 +174,45 @@ def cloud_link():
     finally:
         cursor.close()
         conn.close()
+@app.route('/credential-reset/<user_id>', methods=['GET'])
+def credential_reset(user_id):
+    conn = connect_to_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+           "DELETE FROM CloudCredentials WHERE UserID = %s",
+            (user_id,)
+        )
+        conn.commit()
+        return jsonify({'message': 'Credentials Succesfully Reset'}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
 
+@app.route('/get-account-info/<user_id>', methods=['GET'])
+def get_account_info(user_id):
+    conn = connect_to_db()
+    cursor = conn.cursor()
+    try:
+        linked = "False"
+        # Query the Users table
+        cursor.execute('SELECT Email FROM users WHERE UserID = %s', (user_id,))
+        result = cursor.fetchone()
+        if not result:
+            return jsonify({"error": "User not found"}), 404
+        email = result[0]
 
+        # Query the CloudCredentials table
+        cursor.execute('SELECT AccessKey, SecretKeyEncrypted FROM CloudCredentials WHERE UserID = %s', (user_id,))
+        result = cursor.fetchone()
+        if result:
+            linked = "True"
+        return jsonify({"Email": email, "Linked": linked})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+    finally:
+        cursor.close()
+        conn.close()
 if __name__ == '__main__':
     app.run(debug=True)

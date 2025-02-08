@@ -1,137 +1,174 @@
-/* General Reset */
+/* General Styles */
 body, html {
-  margin: 0;
-  padding: 0;
-  font-family: Arial, sans-serif;
-  color: #333;
-  background-color: #f4f4f4;
-  line-height: 1.6;
+    margin: 0;
+    padding: 0;
+    font-family: 'Poppins', sans-serif;
+    color: #333;
+    background-color: #f4f4f4;
+    line-height: 1.8;
 }
 
-/* Navbar Styles */
+a {
+    color: #00796b;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+a:hover {
+    color: #004d40;
+}
+
+/* Navbar */
 .navbar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  display: flex; /* Use flexbox for layout */
-  justify-content: space-between; /* Spread out the sections */
-  align-items: center; /* Vertically align everything */
-  padding: 5px 20px;
-  background-color: #006d5b;
-  color: white;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
-  box-sizing: border-box;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: #004d40;
+    color: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    height: 60px;
+    box-sizing: border-box;
 }
 
-/* Logo Section */
-.navbar-left {
-  display: flex;
-  align-items: center;
+/* Flexbox layout fix */
+.navbar-left, .navbar-center, .navbar-links {
+    flex: 1;
+    display: flex;
+    align-items: center;
 }
 
-.navbar-logo {
-  height: 90px; /* Logo height */
-  width: auto; /* Maintain aspect ratio */
-}
-
-/* Center Section */
 .navbar-center {
-  position: absolute; /* Position the center text absolutely */
-  left: 50%; /* Move it to the middle of the navbar */
-  transform: translateX(-50%); /* Shift it back by 50% of its own width for true centering */
-  text-align: center;
+    justify-content: center;
 }
 
+/* Logo */
+.navbar-logo {
+    height: 40px;
+    width: auto;
+    transition: transform 0.3s ease;
+    margin-right: 12px;
+}
+
+.navbar-logo:hover {
+    transform: scale(1.1);
+}
+
+/* Title */
 .navbar-brand {
-  font-size: 2.5em;
-  font-weight: bold;
-  color: white;
-  white-space: nowrap; /* Prevent the text from wrapping */
+    font-size: 1.5rem;
+    font-weight: 700;
+    white-space: nowrap;
 }
 
-/* Links Section */
+/* Links */
 .navbar-links {
-  font-size: 1.2em;
-  display: flex;
-  list-style: none;
-  gap: 20px; /* Space between links */
-  margin: 0;
-  padding: 0;
+    justify-content: flex-end;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.navbar-links li {
+    margin-left: 20px;
 }
 
 .navbar-links a {
-  text-decoration: none;
-  color: white;
-  font-size: 1em;
-  padding: 8px 12px;
-  border-radius: 4px;
-  transition: all 0.3s ease;
+    color: white;
+    font-size: 1.1rem;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-weight: 800;
+    text-decoration: none;
+    transition: transform 0.2s ease, background-color 0.3s ease;
+    white-space: nowrap;
 }
 
 .navbar-links a:hover {
-  background-color: white;
-  color: #006d5b;
-  font-weight: normal; /* Prevent layout shifting */
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    background-color: white;
+    text-decoration: none;
+    color: #004d40;
+    transform: scale(1.05);
 }
-
 
 /* Hub Container */
 .hub-container {
-  position: relative;
-  margin: 100px auto; /* Add space below the navbar */
-  width: 90%;
-  max-width: 800px; /* Limit max width for readability */
-  text-align: center;
-  background-color: #ffffff; /* Clean white background */
-  border-radius: 8px;
-  padding: 40px 30px;
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1); /* Add smooth shadow */
-  overflow: hidden;
+    margin-top: 130px;
+    padding: 40px 30px;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    text-align: center;
 }
 
-.hub-container h1 {
-  font-size: 3em;
-  color: #006d5b;
-  margin-bottom: 20px;
-  font-weight: 700;
-  letter-spacing: 1px;
+/* Headings */
+h1 {
+    color: #004d40;
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 20px;
 }
 
-.hub-container p {
-  font-size: 1.2em;
-  color: #555555; /* Subtle text color for readability */
-  line-height: 1.8;
-  margin-bottom: 30px;
+p {
+    font-size: 1.1rem;
+    color: #333;
+    line-height: 1.8;
+    margin: 10px 0;
+    text-align: justify;
+}
+.user-icon-button {
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
-/* Responsive Adjustments */
+.user-icon-button:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    transform: scale(1.05);
+}
+
+.user-icon {
+    width: 28px;
+    height: 20px;
+    fill: white;
+}
+
+.fa-user {
+    color: white;
+}
+
+
+/* Responsive Design */
 @media (max-width: 768px) {
-  .navbar {
-      flex-direction: column; /* Stack items vertically */
-      align-items: center;
-      padding: 10px 20px;
-  }
+    .navbar-links {
+        display: none;
+    }
 
-  .navbar-left,
-  .navbar-center,
-  .navbar-links {
-      flex: none; /* Remove flex behavior */
-      margin-bottom: 10px; /* Add spacing between sections */
-  }
+    .navbar {
+        padding: 10px 20px;
+    }
 
-  .navbar-logo {
-      height: 40px; /* Slightly smaller logo for mobile */
-  }
+    .hub-container {
+        padding: 20px;
+    }
 
-  .navbar-brand {
-      font-size: 1.5em; /* Adjust font size for mobile */
-  }
+    h1 {
+        font-size: 1.8rem;
+    }
 
-  .navbar-links {
-      flex-direction: column; /* Stack links vertically */
-      gap: 10px; /* Reduce spacing between links */
-  }
+    p {
+        font-size: 1rem;
+    }
 }
+

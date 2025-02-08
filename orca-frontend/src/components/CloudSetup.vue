@@ -14,37 +14,48 @@
                 <li v-if="isLoggedIn">
                     <a class="dropdown-toggle">Account</a>
                     <ul class="dropdown-menu">
-                        <li><a @click="navigate('profile')">Profile</a></li>  
+                        <li><a @click="navigate('profile')">Profile</a></li>
                         <li><a @click="navigate('logout')">Logout</a></li>
                     </ul>
                 </li>
             </ul>
         </nav>
 
-        <!-- Progress Indicator -->
+        <!-- Progress Bar -->
         <div class="progress-bar-container">
             <div class="progress-bar" :style="{ width: progress + '%' }"></div>
         </div>
 
-        <!-- Main Content -->
+        <!-- Hub Container -->
         <div class="hub-container">
-            <h1 class="main-heading">Setting Up an AWS Cloud User </h1>
+            <h1 class="main-heading">Setting Up an AWS Cloud User</h1>
 
-            <!-- Step Cards -->
+            <!-- Steps -->
             <div v-for="(step, index) in steps" :key="index" class="step-card" @click="toggleStep(index)">
                 <h2 class="step-title">{{ step.title }}</h2>
                 <div v-if="activeStep === index" class="step-content">
                     <p v-html="step.content"></p>
                     <pre v-if="step.policy">{{ JSON.stringify(step.policy, null, 2) }}</pre>
+
+                    <!-- Button for Step 6 -->
+                    <button
+                        v-if="step.requiresUpload"
+                        class="upload-button"
+                        @click.stop="navigateToUpload"
+                    >
+                        Upload Cloud Credentials
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 </template>
 
+
 <script>
 import { steps } from "@/assets/steps";
 import "@/assets/css/aws-setup-tutorial.css";
+
 export default {
     data() {
         return {
@@ -68,8 +79,10 @@ export default {
         },
         updateProgress() {
             const completedSteps = this.steps.filter((_, index) => index <= this.activeStep).length;
-            
             this.progress = (completedSteps / this.steps.length) * 100;
+        },
+        navigateToUpload() {
+            this.$router.push('/link');  // Navigate to the upload page
         }
     },
     mounted() {

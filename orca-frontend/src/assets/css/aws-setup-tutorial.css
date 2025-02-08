@@ -179,3 +179,21 @@ body, html {
     font-size: 1rem;
 }
 
+.upload-button {
+    background-color: #00796b;
+    color: white;
+    font-size: 1rem;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    margin-top: 15px;
+}
+
+.upload-button:hover {
+    background-color: #004d40;
+    transform: scale(1.02);
+}
+
