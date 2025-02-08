@@ -69,7 +69,13 @@ export default {
         if (response.ok) {
           sessionStorage.setItem('token', data.token);
           sessionStorage.setItem('user_id', data.user_id);
-          this.$router.push('/');
+          if (data.link){
+            this.$router.push('/');
+          }
+          else {
+            this.$router.push('/link')
+          }
+          
         } else {
           this.errorMessage = data.message || 'Login unsuccessful.';
         }

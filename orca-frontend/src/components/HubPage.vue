@@ -10,7 +10,6 @@
         <ul class="navbar-links">
           <li v-if="!isLoggedIn"><a @click="navigate('login')">Login</a></li>
           <li v-if="!isLoggedIn"><a @click="navigate('register')">Register</a></li>
-          <li v-if="isLoggedIn"><a @click="navigate('link')">Link Cloud Account</a></li>
         </ul>
 
       </nav>

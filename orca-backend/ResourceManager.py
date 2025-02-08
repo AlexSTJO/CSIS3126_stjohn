@@ -4,12 +4,7 @@ import csv
 import time
 
 class AWSResourceManager:
-    def __init__(self, access_key, secret_access_key, region_name, bucket_name, intance_id):
-        self.session = boto3.Session(
-            aws_access_key_id=access_key,
-            aws_secret_access_key=secret_access_key,
-            region_name=region_name
-        )
+    def __init__(self, session, region_name):
         self.region_name = region_name
         self.ec2_client = self.session.client('ec2')
         self.ssm_client = self.session.client('ssm')
@@ -233,7 +228,13 @@ def pull_creds():
 
 if __name__ == "__main__":
     creds = pull_creds()
-    resource_manager = AWSResourceManager(creds['access_key'], creds['secret_access_key'], "us-east-2")
+    session = boto3.Session(
+        aws_access_key_id=access_key,
+        aws_secret_access_key=secret_access_key,
+        region_name=region_name
+    )
+
+    resource_manager = AWSResourceManager(session, region_name)
 
     existing_resources = resource_manager.resource_existence()
     existing_resources = resource_manager.create_and_configure_vpc(existing_resources)

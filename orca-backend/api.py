@@ -8,7 +8,9 @@ from CloudHandler import get_db_credentials, get_encryption_key
 from Utils import encrypt_secret, decrypt_secret
 from dotenv import load_dotenv
 import os
-
+import boto3
+from ResourceManager import AWSResourceManager
+import botocore.exceptions
 load_dotenv()
 app = Flask(__name__)
 CORS(app)
@@ -29,6 +31,33 @@ def connect_to_db():
         password=creds["password"],
         database=os.getenv("DB_NAME")
     )
+def create_session(user_id):
+    conn = connect_to_db()
+    cursor = conn.cursor()
+
+    cursor.execute(
+            "SELECT AccessKey, SecretKeyEncrypted, EncryptionKeyId, RegionName FROM CloudCredentials WHERE UserID = %s",
+            (user_id,)
+        )
+    result = cursor.fetchone()
+    if result:
+        print("here")
+        access_key, secret_key_encrypted, encryption_key_id, region_name = result
+        encryption_key = get_encryption_key(encryption_key_id)
+        secret_key = decrypt_secret(secret_key_encrypted, encryption_key)
+        session = boto3.Session(
+            aws_access_key_id = access_key,
+            aws_secret_access_key = secret_key,
+            region_name = region_name
+        )
+        try:
+            session.client('sts').get_caller_identity()
+            return session
+        except botocore.exceptions.ClientError as e:
+            return None
+    else:
+        return None
+        
 
 # Login endpoint
 @app.route('/login', methods=['POST'])
@@ -53,7 +82,12 @@ def login():
                 SECRET_KEY,
                 algorithm="HS256"
             )
-            return jsonify({"token": token, "user_id": user['UserID']}), 200 
+            session = create_session(user["UserID"])
+            if session:
+                link = True
+            else:
+                link = False
+            return jsonify({"token": token, "user_id": user['UserID'], "link": link}), 200 
         else:
             return jsonify({"error": "Invalid email or password"}), 401
     finally:
@@ -82,37 +116,12 @@ def register():
         cursor.close()
         conn.close()
 
-@app.route('/upload-script', methods=['POST'])
-def upload_script():
-    user_id = request.form.get('user_id')
-    file = request.files['file']
-
-    if not user_id or not file:
-        return jsonify({"error": "Missing user ID or file"}), 400
-
-    conn = connect_to_db()
-    cursor = conn.cursor()
-
-    try:
-        cursor.execute(
-            "INSERT INTO scripts (user_id, file_name) VALUES (%s, %s)",
-            (user_id, file.filename)
-        )
-        conn.commit()
-        return jsonify({"message": "Script uploaded successfully!"}), 201
-    
-    except Exception as e:
-        return jsonify({"error": str(e)}), 400
-    
-    finally:
-        cursor.close()
-        conn.close()
-
 @app.route('/upload-credentials', methods=['POST'])
 def upload_credentials():
     user_id = request.form.get('user_id')
     access_key = request.form.get('access_key')
     secret_key = request.form.get('secret_key')
+    region_name = request.form.get('region')
     encryption_key_id = os.getenv('E_KEY_ID_CLOUD')
     encryption_key = get_encryption_key(encryption_key_id)
 
@@ -121,23 +130,52 @@ def upload_credentials():
         return jsonify({"error": "Missing Credentials or Invalid Token"}), 400
     
     secret_key = encrypt_secret(secret_key, encryption_key) 
-    
     conn = connect_to_db()
     cursor = conn.cursor()
 
     try:
         cursor.execute(
-        "INSERT INTO CloudCredentials (UserID, AccessKey, SecretKeyEncrypted, EncryptionKeyId) VALUES (%s,%s,%s,%s)",
-        (user_id, access_key, secret_key, encryption_key_id)
+        "INSERT INTO CloudCredentials (UserID, AccessKey, SecretKeyEncrypted, EncryptionKeyId, RegionName) VALUES (%s,%s,%s,%s,%s)",
+        (user_id, access_key, secret_key, encryption_key_id,region_name,)
         )
         conn.commit()
-        return jsonify({"message": "Credentials Uploaded"}), 201
+        session = create_session(user_id)
+        if not session:
+            cursor.execute(
+                "DELETE FROM CloudCredentials WHERE UserID = %s",
+                (user_id,)
+            )
+            conn.commit()
+            return jsonify({"error": "Invalid Credentials"}), 401
+        else: 
+            return jsonify({"message": "Credentials Uploaded"}), 201
     except Exception as e:
+        print(e)
         return jsonify({"error": str(e)}), 400
     
     finally:
         cursor.close()
         conn.close()
+
+ 
+
+@app.route('/cloud-resource-creation/<user_id>', methods=['GET'])
+def cloud_link(): 
+    try:
+        session = create_session(user_id)
+        if session:
+            manager = AWSResourceManager(session, session.region_name)
+            existing_resources = manager.resource_existance()
+            print(existing_resources)
+        else:
+            return jsonify({"error": "No credentials found for the given user ID."}), 400
+            
+    except Exception as e:
+        return {"Error": str(e)}
+    finally:
+        cursor.close()
+        conn.close()
+
 
 if __name__ == '__main__':
     app.run(debug=True)
