@@ -12,8 +12,8 @@
                 <li v-if="!isLoggedIn"><a @click="navigate('login')">Login</a></li>
                 <li v-if="!isLoggedIn"><a @click="navigate('register')">Register</a></li>
                 <li v-if="isLoggedIn">
-                    <a class="dropdown-toggle">Account</a>
-                    <ul class="dropdown-menu">
+                    <a class="dropdown-toggle" @click="toggleDropdown">Account</a>
+                    <ul v-if="showDropdown" class="dropdown-menu">
                         <li><a @click="navigate('profile')">Profile</a></li>
                         <li><a @click="navigate('logout')">Logout</a></li>
                     </ul>
@@ -21,23 +21,21 @@
             </ul>
         </nav>
 
-        <!-- Progress Bar -->
         <div class="progress-bar-container">
             <div class="progress-bar" :style="{ width: progress + '%' }"></div>
         </div>
 
-        <!-- Hub Container -->
         <div class="hub-container">
             <h1 class="main-heading">Setting Up an AWS Cloud User</h1>
 
-            <!-- Steps -->
             <div v-for="(step, index) in steps" :key="index" class="step-card" @click="toggleStep(index)">
                 <h2 class="step-title">{{ step.title }}</h2>
                 <div v-if="activeStep === index" class="step-content">
                     <p v-html="step.content"></p>
                     <pre v-if="step.policy">{{ JSON.stringify(step.policy, null, 2) }}</pre>
-
-                    <!-- Button for Step 6 -->
+                    <button v-if="step.policy" class="copy-button" @click.stop="copyToClipboard(step.policy, index)">
+                        {{ copiedIndex === index ? 'Copied!' : 'Copy JSON' }}
+                    </button>
                     <button
                         v-if="step.requiresUpload"
                         class="upload-button"
@@ -51,7 +49,6 @@
     </div>
 </template>
 
-
 <script>
 import { steps } from "@/assets/steps";
 import "@/assets/css/aws-setup-tutorial.css";
@@ -62,7 +59,9 @@ export default {
             isLoggedIn: false,
             activeStep: null,
             steps: steps,
-            progress: 0
+            progress: 0,
+            showDropdown: false,
+            copiedIndex: null
         };
     },
     methods: {
@@ -82,7 +81,19 @@ export default {
             this.progress = (completedSteps / this.steps.length) * 100;
         },
         navigateToUpload() {
-            this.$router.push('/link');  // Navigate to the upload page
+            this.$router.push('/link');  
+        },
+        toggleDropdown() {
+            this.showDropdown = !this.showDropdown;
+        },
+        async copyToClipboard(jsonData, index) {
+            try {
+                await navigator.clipboard.writeText(JSON.stringify(jsonData, null, 2));
+                this.copiedIndex = index;
+                setTimeout(() => { this.copiedIndex = null; }, 2000);
+            } catch (error) {
+                console.error("Failed to copy: ", error);
+            }
         }
     },
     mounted() {

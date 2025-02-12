@@ -6,9 +6,10 @@ import time
 class AWSResourceManager:
     def __init__(self, session, region_name):
         self.region_name = region_name
-        self.ec2_client = self.session.client('ec2')
-        self.ssm_client = self.session.client('ssm')
-        self.s3_client = self.session.client('s3')
+        self.ec2_client = session.client('ec2')
+        self.ssm_client = session.client('ssm')
+        self.s3_client = session.client('s3')
+        self.iam_client = session.client('iam')
 
     def resource_existence(self):
         resources = ['Vpc', 'RouteTable', 'Subnet', 'InternetGateway', 'KeyPair', 'SecurityGroup', 'Ec2', 'S3']
@@ -217,6 +218,84 @@ class AWSResourceManager:
 
         raise Exception(f"Failed to create a unique S3 bucket after {max_attempts} attempts.")
 
+    def check_attached_policies(self):
+        try:
+            user_name = self.get_user_name()
+            if not user_name:
+                print("Unable to retrieve user name.")
+                return []
+
+            response = self.iam_client.list_attached_user_policies(UserName=user_name)
+            attached_policies = [policy['PolicyArn'] for policy in response.get('AttachedPolicies', [])]
+            print("Attached Policies:", attached_policies)
+            return attached_policies
+        except botocore.exceptions.ClientError as e:
+            print(f"Error checking attached policies: {e}")
+            return []
+
+    def get_policy_permissions(self, policy_arn):
+        try:
+            policy_version = self.iam_client.get_policy(PolicyArn=policy_arn)['Policy']['DefaultVersionId']
+            policy_document = self.iam_client.get_policy_version(PolicyArn=policy_arn, VersionId=policy_version)
+            
+            statements = policy_document['PolicyVersion']['Document']['Statement']
+            allowed_actions = []
+
+            if isinstance(statements, dict): 
+                statements = [statements]
+
+            for statement in statements:
+                if statement['Effect'] == 'Allow':
+                    if isinstance(statement['Action'], list):
+                        allowed_actions.extend(statement['Action'])
+                    else:
+                        allowed_actions.append(statement['Action'])
+
+            return allowed_actions
+        except botocore.exceptions.ClientError as e:
+            print(f"Error fetching policy details: {e}")
+            return []
+
+    def check_required_policies(self):
+        required_actions = [
+            "ec2:DescribeInstances", "ec2:CreateVpc", "ec2:ModifyVpcAttribute", "ec2:DescribeVpcs",
+            "ec2:CreateSubnet", "ec2:DescribeSubnets", "ec2:ModifySubnetAttribute", "ec2:CreateInternetGateway",
+            "ec2:DescribeInternetGateways", "ec2:AttachInternetGateway", "ec2:CreateRouteTable", "ec2:DescribeRouteTables",
+            "ec2:CreateRoute", "ec2:AssociateRouteTable", "ec2:DescribeAvailabilityZones", "ec2:CreateTags",
+            "ec2:CreateKeyPair", "ec2:CreateSecurityGroup", "ec2:DeleteSecurityGroup", "ec2:DescribeSecurityGroups",
+            "ec2:AuthorizeSecurityGroupIngress", "ec2:RunInstances", "ec2:TerminateInstances", "ec2:StartInstances",
+            "ec2:StopInstances", "ec2:DescribeInstanceStatus", "ec2:DescribeImages", "ec2:DescribeKeyPairs",
+            "ec2:AllocateAddress", "ec2:AssociateAddress", "ssm:GetParameter", "ssm:SendCommand",
+            "ssm:GetCommandInvocation", "ssm:DescribeInstanceInformation", "s3:ListAllMyBuckets", "s3:CreateBucket",
+            "s3:PutObject", "iam:GetUser", "iam:GetPolicy", "iam:GetPolicyVersion"
+        ]
+
+        attached_policies = self.check_attached_policies()
+        user_permissions = set()
+
+        if len(attached_policies) > 1:
+            print("Error: Only one policy expected")
+            return
+        else:
+            policy_arn = attached_policies[0]
+            user_permissions.update(self.get_policy_permissions(policy_arn))
+
+        missing_permissions = [action for action in required_actions if action not in user_permissions]
+
+        if missing_permissions:
+            print("Missing Required Permissions:", missing_permissions)
+        else:
+            print("All required permissions are granted.")
+
+        return missing_permissions
+
+    def get_user_name(self):
+        try:
+            response = self.iam_client.get_user()
+            return response['User']['UserName']
+        except botocore.exceptions.ClientError as e:
+            print(f"Error fetching user name: {e}")
+            return None
 def pull_creds():
     with open('../secrets.csv', newline='', encoding='utf-8-sig') as csvfile:
         reader = csv.DictReader(csvfile)
@@ -229,12 +308,13 @@ def pull_creds():
 if __name__ == "__main__":
     creds = pull_creds()
     session = boto3.Session(
-        aws_access_key_id=access_key,
-        aws_secret_access_key=secret_access_key,
-        region_name=region_name
+        aws_access_key_id=creds["access_key"],
+        aws_secret_access_key=creds["secret_access_key"],
+        region_name="us-east-2"
     )
 
-    resource_manager = AWSResourceManager(session, region_name)
+    resource_manager = AWSResourceManager(session, "us-east-2")
+    resource_manager.check_required_policies()
 
     existing_resources = resource_manager.resource_existence()
     existing_resources = resource_manager.create_and_configure_vpc(existing_resources)

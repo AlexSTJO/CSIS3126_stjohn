@@ -1,6 +1,5 @@
 <template>
     <div>
-        <!-- Navbar -->
     <nav class="navbar">
             <div class="navbar-left">
                 <img src="../assets/orca.png" alt="Logo" class="navbar-logo" />
@@ -13,14 +12,11 @@
             </ul>
         </nav>
 
-        <!-- Main Content -->
         <div class="hub-container">
             <h1>Account Information</h1>
 
-            <!-- Loading Indicator -->
             <p v-if="loading">Loading account information...</p>
 
-            <!-- Display Account Info -->
             <div v-else>
                 <p><strong>Email:</strong> {{ accountInfo.Email || 'N/A' }}</p>
                 <p>
@@ -30,11 +26,9 @@
                     </span>
                 </p>
 
-                <!-- Reset Credentials Button -->
                 <button class="reset-button" @click="resetCredentials">Reset Credentials</button>
             </div>
 
-            <!-- Messages -->
             <p v-if="resetMessage" class="reset-message">{{ resetMessage }}</p>
             <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
         </div>
@@ -51,7 +45,7 @@ export default {
             accountInfo: {},      
             loading: true,        
             errorMessage: "",     
-            resetMessage: ""      // Message for successful credential reset
+            resetMessage: ""      
         };
     },
     methods: {
@@ -61,8 +55,7 @@ export default {
         checkLogin() {
             const token = sessionStorage.getItem("token");
             this.isLoggedIn = !!token;
-
-            // If not logged in, redirect to the login page
+            
             if (!this.isLoggedIn) {
                 this.navigate('login');
             }
@@ -93,7 +86,7 @@ export default {
             const token = sessionStorage.getItem("token");
  
             try {
-                this.resetMessage = "";  // Clear previous messages
+                this.resetMessage = "";  
                 this.errorMessage = "";
 
                 const response = await fetch(`${API_ENDPOINTS.CREDENTIAL_RESET}`, {
@@ -106,19 +99,21 @@ export default {
 
                 if (!response.ok) {
                     throw new Error(`Failed to reset credentials. HTTP Status: ${response.status}`);
+                } else {
+                    sessionStorage.setItem("link_status", "false")
                 }
-
+                
                 const data = await response.json();
-                this.resetMessage = data.message;  // Display success message
-                await this.fetchAccountInfo();      // Refresh account info
+                this.resetMessage = data.message;  
+                await this.fetchAccountInfo();     
             } catch (error) {
                 this.errorMessage = error.message;
             }
         }
     },
     mounted() {
-        this.checkLogin();       // Check if the user is logged in
-        this.fetchAccountInfo(); // Fetch the account info if logged in
+        this.checkLogin();       
+        this.fetchAccountInfo(); 
     }
 };
 </script>

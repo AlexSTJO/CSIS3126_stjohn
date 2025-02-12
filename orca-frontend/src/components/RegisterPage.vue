@@ -54,7 +54,6 @@ export default {
     async register() {
       this.errorMessage = "";
 
-      // Input validation
       if (!this.email || !this.password || !this.confirmPassword) {
         this.errorMessage = "Please fill in all fields.";
         return;

@@ -5,13 +5,16 @@ import RegisterPage from '../components/RegisterPage.vue';
 import LinkPage from '../components/LinkPage.vue'
 import CloudSetup from '../components/CloudSetup.vue'
 import AccountInfo from '../components/AccountInfo.vue'
+import ResourceAllocation from '../components/ResourceAllocation.vue'
+
 const routes = [
   { path: '/', component: HubPage },
   { path: '/login', component:LoginPage },
   { path: '/register', component:RegisterPage},
   { path: '/link', component:LinkPage },
   { path: '/cloud-tutorial', component:CloudSetup},
-  { path: '/account-info', component:AccountInfo}
+  { path: '/account-info', component:AccountInfo},
+  { path: '/resource-allocation', component:ResourceAllocation}
 ];
 
 const router = createRouter({

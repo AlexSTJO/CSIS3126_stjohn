@@ -1,0 +1,50 @@
+.resource-manager-container {
+  max-width: 800px;
+  margin: 100px auto;
+  padding: 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.resource-status {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.resource-step {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  background: #f4f4f4;
+  border-radius: 6px;
+}
+
+.step-status.completed {
+  color: green;
+  font-weight: bold;
+}
+
+.create-button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  background: #004d40;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  transition: background 0.3s ease;
+}
+
+.create-button:hover {
+  background: #00796b;
+}
+
+.create-button:disabled {
+  background: gray;
+  cursor: not-allowed;
+}
+

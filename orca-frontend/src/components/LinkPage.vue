@@ -28,7 +28,7 @@
           <label for="region">Select AWS Region</label>
           <select id="region" v-model="region" required>
             <option value="us-east-1">US East (N. Virginia)</option>
-            <option value="us-east-2">US East (Ohio)</option>
+            <option value="us-east-2">US East 2 (Ohio)</option>
             <option value="us-west-1">US West (N. California)</option>
             <option value="eu-central-1">EU (Frankfurt)</option>
             <option value="ap-southeast-1">Asia Pacific (Singapore)</option>
@@ -85,6 +85,7 @@ export default {
 
         const data = await response.json();
         if (response.ok) {
+          sessionStorage.setItem("link_status", "true")
           this.$router.push('/')
         } else {
           this.responseMessage = `Error: ${data.error}`;

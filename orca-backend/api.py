@@ -11,9 +11,11 @@ import os
 import boto3
 from ResourceManager import AWSResourceManager
 import botocore.exceptions
+
 load_dotenv()
 app = Flask(__name__)
 CORS(app)
+
 SECRET_KEY = get_encryption_key(os.getenv('E_KEY_ID_JWT'))
     
 # Database connection
@@ -31,6 +33,7 @@ def connect_to_db():
         password=creds["password"],
         database=os.getenv("DB_NAME")
     )
+
 def create_session(user_id):
     conn = connect_to_db()
     cursor = conn.cursor()
@@ -226,14 +229,13 @@ def get_account_info():
         decoded_token = retrieve_token_info(token)
         user_id = decoded_token.get("id") 
         linked = "False"
-        # Query the Users table
+
         cursor.execute('SELECT Email FROM users WHERE UserID = %s', (user_id,))
         result = cursor.fetchone()
         if not result:
             return jsonify({"error": "User not found"}), 404
         email = result[0]
 
-        # Query the CloudCredentials table
         cursor.execute('SELECT AccessKey, SecretKeyEncrypted FROM CloudCredentials WHERE UserID = %s', (user_id,))
         result = cursor.fetchone()
         if result:

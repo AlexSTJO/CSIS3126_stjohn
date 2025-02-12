@@ -142,12 +142,34 @@ p {
     width: 28px;
     height: 20px;
     fill: white;
+    max-width: 800px;
 }
 
 .fa-user {
     color: white;
 }
 
+.link_alert {
+    align-items: center;
+    margin-top: 20px;
+    padding: 10px 10px;
+    max-width: 1000px;
+    margin-left: auto;
+    margin-right: auto;
+    background-color: #ea6c6c;
+    border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    text-align: center;}
+.linkpage {
+    color: #FFFFFF;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.linkpage:hover {
+    color: #8B0000;
+    text-decoration: none;
+}
 
 /* Responsive Design */
 @media (max-width: 768px) {

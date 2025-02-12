@@ -69,7 +69,11 @@ export default {
         if (response.ok) {
           sessionStorage.setItem('token', data.token);
           sessionStorage.setItem('link_status', data.link)
+          if(data.link === "false"){
+            this.$router.push('/cloud-tutorial')
+          } else {
           this.$router.push('/')
+          }
         } else {
           this.errorMessage = data.message || 'Login unsuccessful.';
         }
