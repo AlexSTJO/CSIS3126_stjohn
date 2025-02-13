@@ -13,8 +13,10 @@
           <span class="step-status" :class="{ 'completed': status }">{{ status ? '✔' : '⏳' }}</span>
         </div>
       </div>
-      
-      <button @click="startResourceCreation" :disabled="isCreating" class="create-button">
+
+      <p v-if="permissionsError" class="error-message">{{ permissionsError }}</p>
+
+      <button @click="validatePermissionsAndStart" :disabled="isCreating" class="create-button">
         {{ isCreating ? 'Creating Resources...' : 'Start Resource Check' }}
       </button>
     </div>
@@ -31,6 +33,7 @@ export default {
       resourceStatus: {},
       isCreating: false,
       resourcesExist: false,
+      permissionsError: "",
       responseMessage: ""
     };
   },
@@ -46,7 +49,11 @@ export default {
     },
     async checkResourceExistence() {
       try {
-        const response = await fetch(API_ENDPOINTS.RESOURCE_STATUS);
+        const response = await fetch(API_ENDPOINTS.RESOURCE_STATUS, {
+          headers: {
+            "Authorization": `Bearer ${sessionStorage.getItem("token")}`
+          }
+        });
         const data = await response.json();
         if (!response.ok) throw new Error(data.error);
         
@@ -57,13 +64,37 @@ export default {
         console.error("Error checking resource existence:", error);
       }
     },
+    async validatePermissionsAndStart() {
+      this.permissionsError = "";
+      try {
+        const response = await fetch(API_ENDPOINTS.PERMISSIONS_CHECK, {
+          headers: {
+            "Authorization": `Bearer ${sessionStorage.getItem("token")}`
+          }
+        });
+        
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error);
+        
+        if (data.permissions && Object.keys(data.permissions).length > 0) {
+          this.permissionsError = "Missing permissions: " + Object.keys(data.permissions).join(", ");
+          return;
+        }
+
+        this.startResourceCreation();
+      } catch (error) {
+        this.permissionsError = `Error checking permissions: ${error.message}`;
+        console.error("Permission check failed:", error);
+      }
+    },
     async startResourceCreation() {
       this.isCreating = true;
       try {
         const response = await fetch(API_ENDPOINTS.START_RESOURCE_CREATION, {
           method: "POST",
           headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${sessionStorage.getItem("token")}`
           }
         });
         
@@ -93,4 +124,5 @@ export default {
   }
 };
 </script>
+
 

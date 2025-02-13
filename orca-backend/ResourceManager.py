@@ -287,6 +287,7 @@ class AWSResourceManager:
         else:
             print("All required permissions are granted.")
 
+
         return missing_permissions
 
     def get_user_name(self):

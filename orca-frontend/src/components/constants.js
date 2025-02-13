@@ -5,5 +5,7 @@ export const API_ENDPOINTS = {
   LOGIN: `${BASE_URL}/login`,
   UPLOAD_CREDENTIALS: `${BASE_URL}/upload-credentials`,
   GET_ACCOUNT_INFO: `${BASE_URL}/get-account-info`,
-  CREDENTIAL_RESET: `${BASE_URL}/credential-reset`
+  CREDENTIAL_RESET: `${BASE_URL}/credential-reset`,
+  PERMISSIONS_CHECK: `${BASE_URL}/permissions-check`,
+  RESOURCE_STATUS: `${BASE_URL}/check-resource-existence`
 }

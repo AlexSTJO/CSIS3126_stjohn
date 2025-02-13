@@ -59,6 +59,10 @@ def create_session(user_id):
             return None
     else:
         return None
+
+    cursor.close()
+    conn.close()
+
         
 def retrieve_token_info(token):
     try:
@@ -179,22 +183,6 @@ def upload_credentials():
 
  
 
-@app.route('/cloud-resource-creation', methods=['GET'])
-def cloud_link(): 
-    try:
-        session = create_session(user_id)
-        if session:
-            manager = AWSResourceManager(session, session.region_name)
-            existing_resources = manager.resource_existance()
-            print(existing_resources)
-        else:
-            return jsonify({"error": "No credentials found for the given user ID."}), 400
-            
-    except Exception as e:
-        return {"Error": str(e)}
-    finally:
-        cursor.close()
-        conn.close()
 @app.route('/credential-reset', methods=['GET'])
 def credential_reset():
     token = request.headers.get("Authorization")
@@ -248,5 +236,42 @@ def get_account_info():
     finally:
         cursor.close()
         conn.close()
+
+@app.route('/permissions-check', methods=['GET'])
+def check_permissions():
+    token = request.headers.get('Authorization')
+    if not token:
+        return jsonify({"error": "Authorization Token Missing"})
+    token = token.split(" ")[1] if "Bearer" in token else token
+    try:
+        decoded_token = retrieve_token_info(token)
+        user_id = decoded_token.get("id")
+        session = create_session(user_id)
+        resource_manager = AWSResourceManager(session, session.region_name)
+        missing_permissions = resource_manager.check_required_policies()
+        if missing_permissions:
+            return jsonify({"permissions": {missing_permissions}}), 200
+        else:
+            return jsonify({"permissions": ""}), 200
+    except Excception as e:
+        return jsonify({"error": "An Error Occurred"}), 400
+
+@app.route('/check-resource-existence', methods=['GET'])
+def check_resource_existence():
+    token = request.headers.get('Authorization')
+    if not token:
+        return jsonify({"error": "Authorization Token Missing"})
+    token = token.split(" ")[1] if "Bearer" in token else "token"
+    try:
+        decoded_token = retrieve_token_info(token)
+        user_id = decoded_token.get("id")
+        session = create_session(user_id)
+        resource_manager = AWSResourceManager(session, session.region_name)
+        resource_existence = resource_manager.check_resource_existence()
+        return jsonify({"message": {resource_existence}})
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
+        
 if __name__ == '__main__':
     app.run(debug=True)
