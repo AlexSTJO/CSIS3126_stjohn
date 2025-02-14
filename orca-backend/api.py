@@ -253,8 +253,8 @@ def check_permissions():
             return jsonify({"permissions": {missing_permissions}}), 200
         else:
             return jsonify({"permissions": ""}), 200
-    except Excception as e:
-        return jsonify({"error": "An Error Occurred"}), 400
+    except Exception as e:
+        return jsonify({"error": "ensure permissions are added to role"}), 400
 
 @app.route('/check-resource-existence', methods=['GET'])
 def check_resource_existence():
