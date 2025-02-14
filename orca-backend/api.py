@@ -241,7 +241,7 @@ def get_account_info():
 def check_permissions():
     token = request.headers.get('Authorization')
     if not token:
-        return jsonify({"error": "Authorization Token Missing"})
+        return jsonify({"error": "Authorization Token Missing"}), 400
     token = token.split(" ")[1] if "Bearer" in token else token
     try:
         decoded_token = retrieve_token_info(token)
@@ -260,18 +260,49 @@ def check_permissions():
 def check_resource_existence():
     token = request.headers.get('Authorization')
     if not token:
-        return jsonify({"error": "Authorization Token Missing"})
+        return jsonify({"error": "Authorization Token Missing"}), 400
     token = token.split(" ")[1] if "Bearer" in token else "token"
     try:
         decoded_token = retrieve_token_info(token)
         user_id = decoded_token.get("id")
         session = create_session(user_id)
         resource_manager = AWSResourceManager(session, session.region_name)
-        resource_existence = resource_manager.check_resource_existence()
-        return jsonify({"message": {resource_existence}})
+        resource_existence = resource_manager.resource_existence() 
+        return jsonify(resource_existence), 200    
     except Exception as e:
         return jsonify({"error": str(e)})
 
-        
+@app.route('/create-resource', methods=['GET'])
+def resource_creation():
+    token = request.headers.get('Authorization')
+    if not token:
+        return jsonify({"error": "Authorization Token Missing"}), 400
+    token = token.split(" ")[1] if "Bearer" in token else "token"
+    try:
+        decoded_token = retrieve_token_info(token)
+        user_id = decoded_token.get("id")
+        session = create_session(user_id)
+        resource_manager = AWSResourceManager(session, session.region_name)
+        existing_resources = resource_manager.resource_existence()
+        existing_resources = resource_manager.create_and_configure_vpc(existing_resources)
+
+        if not existing_resources['KeyPair']:
+            resource_manager.create_key_pair()
+        else:
+            print(f"Key Pair Exists: {existing_resources['KeyPair']}")
+
+        if not existing_resources['SecurityGroup']:
+            existing_resources['SecurityGroup'] = resource_manager.create_security_group(existing_resources['Vpc'])
+        else:
+            print(f"Security Group Exists: {existing_resources['SecurityGroup']}")
+        if not existing_resources['S3']:
+            existing_resources["S3"] = resource_manager.create_s3_bucket()
+        else:
+             print(f"S3 Bucket Exists: {existing_resources['S3']}")
+        resource_manager.create_ec2_instance(existing_resources)
+
+        return jsonify({'message':'success'}),200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
 if __name__ == '__main__':
     app.run(debug=True)

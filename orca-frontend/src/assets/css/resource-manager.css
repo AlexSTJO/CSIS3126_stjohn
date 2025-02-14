@@ -92,6 +92,12 @@ body {
 .status {
   border-radius: 0px 4px 4px 0px;
 }
+.completed {
+  color: green;
+}
+.not-created {
+  color: red;
+}
 
 .resource-section th {
   background: #004d40;

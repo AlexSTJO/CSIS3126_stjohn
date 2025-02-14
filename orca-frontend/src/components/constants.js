@@ -7,5 +7,6 @@ export const API_ENDPOINTS = {
   GET_ACCOUNT_INFO: `${BASE_URL}/get-account-info`,
   CREDENTIAL_RESET: `${BASE_URL}/credential-reset`,
   PERMISSIONS_CHECK: `${BASE_URL}/permissions-check`,
-  RESOURCE_STATUS: `${BASE_URL}/check-resource-existence`
+  RESOURCE_STATUS: `${BASE_URL}/check-resource-existence`,
+  RESOURCE_CREATE: `${BASE_URL}/create-resource`
 }

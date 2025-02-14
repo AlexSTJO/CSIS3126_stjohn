@@ -44,10 +44,10 @@
 
     <div class="button-section">
       <button 
-        @click="startResourceCreation" 
-        :disabled="isCreating || !permissionsValid" 
-        class="create-button">
-        {{ isCreating ? 'Creating Resources...' : 'Create Missing Resources' }}
+      @click="handleButtonClick" 
+      :disabled="isCreating || !permissionsValid" 
+      class="create-button">
+      {{ resourcesExist ? 'Go to Home' : isCreating ? 'Creating Resources...' : 'Create Missing Resources' }}
       </button>
     </div>
 
@@ -87,6 +87,13 @@ export default {
         this.$router.push(`/`);
       }
     },
+    handleButtonClick() {
+        if (this.resourcesExist) {
+          this.$router.push('/'); 
+        } else {
+          this.startResourceCreation();
+        }
+    },
     async validatePermissionsAndCheckResources() {
       this.isCheckingPermissions = true;
       this.permissionsError = "";
@@ -125,7 +132,7 @@ export default {
         if (!response.ok) throw new Error(data.error);
 
         Object.keys(this.resourceStatus).forEach(resource => {
-          this.resourceStatus[resource] = data[resource] ?? false;
+          this.resourceStatus[resource] = data[resource] && data[resource] !== "" ? true : false;
         });
 
         this.resourcesExist = Object.values(this.resourceStatus).every(status => status);
@@ -134,6 +141,24 @@ export default {
         console.error("Error checking resource existence:", error);
       } finally {
         this.isCheckingResources = false;
+      }
+    },
+    async startResourceCreation() {
+      this.isCreating = true;
+      try {
+        const response = await fetch(API_ENDPOINTS.RESOURCE_CREATE, {
+          method: "GET",
+          headers: { "Authorization": `Bearer ${sessionStorage.getItem("token")}` }
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error);
+
+        await this.checkResourceExistence();
+      } catch (error) {
+        console.error("Error creating resources:", error);
+      } finally {
+        this.isCreating = false;
       }
     }
   },
