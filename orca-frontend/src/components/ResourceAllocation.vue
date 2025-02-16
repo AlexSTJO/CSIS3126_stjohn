@@ -53,11 +53,8 @@
 
   </div>
 </template>
-
-
 <script>
 import { API_ENDPOINTS } from "./constants.js";
-import '@/assets/css/resource-manager.css'
 export default {
   data() {
     return {
@@ -168,4 +165,168 @@ export default {
   }
 };
 </script>
+<style scoped>
+  body {
+    font-family: "Inter", sans-serif;
+    background: #f4f6f8;
+    margin: 0;
+  }
+
+  .dashboard-container {
+    max-width: 850px;
+    margin-right: auto;
+    margin-left: auto;
+    margin-top: 0px;
+    padding: 30px;
+    padding-top:10px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+  }
+
+  .header h1 {
+    font-size: 2rem;
+    text-align: center;
+    color: #004d40;
+    margin-bottom: 25px;
+    font-weight: bold;
+  }
+
+  .status-section {
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid #d1d5db;
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+  }
+
+  .status-box {
+    font-size: 1.2rem;
+    font-weight: bold;
+    padding: 15px;
+    border-radius: 8px;
+    background: #f9fafb;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    text-align: left;
+    width: 100%;
+  }
+
+  .status-box .checking {
+    color: orange;
+  }
+
+  .status-box .success {
+    color: green;
+  }
+
+  .status-box .error {
+    color: red;
+  }
+
+  .resource-section {
+    background: #ffffff;
+    padding: 25px;
+    padding-top: 0px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid #d1d5db;
+    text-align: center;
+  }
+
+  .resource-section h2 {
+    color: #004d40;
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+    font-weight: bold;
+  }
+
+  .resource-section table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .resource-section th, .resource-section td {
+    padding: 14px;
+    border-bottom: 1px solid #ddd;
+    text-align: left;
+  }
+  .resource {
+    border-radius: 4px 0 0 4px;
+  }
+  .status {
+    border-radius: 0px 4px 4px 0px;
+  }
+  .completed {
+    color: green;
+  }
+  .not-created {
+    color: red;
+  }
+
+  .resource-section th {
+    background: #004d40;
+    color: white;
+    text-transform: uppercase;
+    font-size: 1rem;
+  }
+
+  .button-section {
+    text-align: center;
+    margin-top: 25px;
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid #d1d5db;
+  }
+
+  .create-button {
+    font-size: 1.1rem;
+    padding: 12px 18px;
+    background: #004d40;
+    width: 100%;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background 0.3s ease, transform 0.2s ease;
+  }
+
+  .create-button:hover {
+    background: #00796b;
+    transform: translateY(-2px);
+  }
+
+  .create-button:disabled {
+    background: gray;
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  @media (max-width: 768px) {
+    .dashboard-container {
+      width: 90%;
+      padding: 20px;
+    }
+
+    .status-section {
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .status-box {
+      width: 100%;
+    }
+
+    .resource-section {
+      padding: 20px;
+    }
+  }
+ 
+</style>
 

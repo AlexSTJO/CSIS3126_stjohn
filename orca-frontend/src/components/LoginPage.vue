@@ -25,9 +25,7 @@
     </div>
   </div>
 </template>
-
 <script>
-import '@/assets/css/auth-form.css';
 import {API_ENDPOINTS} from "./constants.js";
 
 export default {
@@ -91,4 +89,92 @@ export default {
 };
 </script>
 
+<style scoped> 
+  .container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
 
+  .login-form {
+    margin-top: -250px;
+    background-color: white; 
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1); 
+    max-width: 500px;
+    width: 90%; 
+    text-align: center;
+    box-sizing: border-box;
+  }
+
+
+  .login-form h1 {
+    font-size: 2em;
+    color: #006d5b; 
+    margin-bottom: 20px;
+  }
+
+
+  .input-group {
+    margin-bottom: 15px;
+    text-align: left; 
+  }
+
+  .input-group label {
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 5px;
+    display: block;
+  }
+
+  .input-group input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+    font-size: 1em;
+  }
+
+
+  button {
+    width: 100%;
+    padding: 12px;
+    font-size: 1.1em;
+    background-color: #006d5b; 
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  button:hover {
+    background-color: #004d40; 
+  }
+
+
+  .error-message {
+    color: red;
+    margin-bottom: 15px;
+    font-weight: bold;
+  }
+
+
+  .login-form .signup-link {
+    margin-top: 15px;
+    font-size: 0.9em;
+  }
+
+  .login-form .signup-link a {
+    color: #006d5b;
+    text-decoration: none;
+    font-weight: bold;
+  }
+
+  .login-form .signup-link a:hover {
+    text-decoration: underline;
+  }
+</style>
