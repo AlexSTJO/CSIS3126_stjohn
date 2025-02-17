@@ -6,6 +6,7 @@ import LinkPage from '../components/LinkPage.vue'
 import CloudSetup from '../components/CloudSetup.vue'
 import AccountInfo from '../components/AccountInfo.vue'
 import ResourceAllocation from '../components/ResourceAllocation.vue'
+import LogoutPage from '../components/LogoutPage.vue'
 
 const routes = [
   { path: '/', component: HubPage },
@@ -14,7 +15,8 @@ const routes = [
   { path: '/link', component:LinkPage },
   { path: '/cloud-tutorial', component:CloudSetup},
   { path: '/account-info', component:AccountInfo},
-  { path: '/resource-allocation', component:ResourceAllocation}
+  { path: '/resource-allocation', component:ResourceAllocation},
+  { path: '/logout', component:LogoutPage}
 ];
 
 const router = createRouter({

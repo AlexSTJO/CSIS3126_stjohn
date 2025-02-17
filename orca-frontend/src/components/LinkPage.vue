@@ -16,7 +16,7 @@
             viewBox="0 0 24 24"
             fill="none"
             stroke="white"
-            stroke-width="2"
+            stroke-width="1"
             stroke-linecap="round"
             stroke-linejoin="round"
           >
@@ -33,7 +33,7 @@
             viewBox="0 0 24 24"
             fill="none"
             stroke="white"
-            stroke-width="2"
+            stroke-width="1"
             stroke-linecap="round"
             stroke-linejoin="round"
             class="home-icon"
@@ -42,7 +42,7 @@
             <path d="M10 21V14H14V21" stroke="white" fill="none" stroke-linecap="round"></path>   
           </svg>
       </button>
-      <button class="icon-button" @click="logout">
+      <button class="icon-button" @click="navigate('logout')">
         <svg
           class="icon-svg"
           xmlns="http://www.w3.org/2000/svg"
@@ -51,7 +51,7 @@
           viewBox="0 0 24 24"
           fill="none"
           stroke="white"
-          stroke-width="2"
+          stroke-width="1"
           stroke-linecap="round"
           stroke-linejoin="round"
         >
