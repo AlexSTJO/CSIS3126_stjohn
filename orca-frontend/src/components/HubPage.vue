@@ -5,17 +5,28 @@
                 <img src="../assets/orca.png" alt="Logo" class="navbar-logo" />
             </div>
             <div class="navbar-center">
-                <div class="navbar-brand">Orca</div>
+                <div class="navbar-brand">Dashboard</div>
             </div>
             <ul class="navbar-links">
                 <li v-if="!isLoggedIn"><a @click="navigate('login')">Login</a></li>
                 <li v-if="!isLoggedIn"><a @click="navigate('register')">Register</a></li>
                 <li v-if="isLoggedIn">
-                    <button class="user-icon-button" @click="navigate('account-info')">
-                        <svg class="user-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="white">
-                            <circle cx="12" cy="8" r="4" stroke="white" stroke-width="1.5" fill="none" />
-                            <path d="M4 20c0-4 4-7 8-7s8 3 8 7" stroke="white" stroke-width="1.5" fill="none" />
-                        </svg>
+                    <button class="icon-button" @click="navigate('account-info')">
+                      <svg
+                        class="icon-svg"
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="32"
+                        height="32"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="white"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <circle cx="12" cy="8" r="4" stroke="white" />
+                        <path d="M4 20c0-4 4-7 8-7s8 3 8 7" stroke="white" />
+                      </svg>
                     </button>
                 </li>
             </ul>
@@ -57,97 +68,9 @@
     
 </script>
 <style scoped>      
-  a {
-      color: #00796b;
-      text-decoration: none;
-      transition: color 0.3s ease;
-  }
-
-  a:hover {
-      color: #004d40;
-  }
-
-
-  .navbar {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px 20px;
-      background-color: #004d40;
-      color: white;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      z-index: 1000;
-      height: 60px;
-      box-sizing: border-box;
-  }
-
-
-  .navbar-left, .navbar-center, .navbar-links {
-      flex: 1;
-      display: flex;
-      align-items: center;
-  }
-
-  .navbar-center {
-      justify-content: center;
-  }
-
-
-  .navbar-logo {
-      height: 80px;
-      width: auto;
-      transition: transform 0.3s ease;
-      margin-right: 12px;
-  }
-
-  .navbar-logo:hover {
-      transform: scale(1.1);
-  }
-
-
-  .navbar-brand {
-      font-size: 1.5rem;
-      font-weight: 700;
-      white-space: nowrap;
-  }
-
-
-  .navbar-links {
-      justify-content: flex-end;
-      list-style: none;
-      margin: 0;
-      padding: 0;
-  }
-
-  .navbar-links li {
-      margin-left: 20px;
-  }
-
-  .navbar-links a {
-      color: white;
-      font-size: 1.1rem;
-      padding: 8px 14px;
-      border-radius: 6px;
-      font-weight: 800;
-      text-decoration: none;
-      transition: transform 0.2s ease, background-color 0.3s ease;
-      white-space: nowrap;
-  }
-
-  .navbar-links a:hover {
-      background-color: white;
-      text-decoration: none;
-      color: #004d40;
-      transform: scale(1.05);
-  }
-
-
+  
   .hub-container {
-      margin-top: 130px;
+      margin-top: 90px;
       padding: 40px 30px;
       max-width: 800px;
       margin-left: auto;
@@ -157,7 +80,6 @@
       box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
       text-align: center;
   }
-
 
   h1 {
       color: #004d40;
@@ -173,34 +95,14 @@
       margin: 10px 0;
       text-align: justify;
   }
-  .user-icon-button {
-      background-color: transparent;
-      border: none;
-      cursor: pointer;
-      padding: 8px;
-      border-radius: 50%;
-      transition: background-color 0.3s ease, transform 0.2s ease;
-  }
-
-  .user-icon-button:hover {
-      background-color: rgba(255, 255, 255, 0.2);
-      transform: scale(1.05);
-  }
-
-  .user-icon {
-      width: 28px;
-      height: 20px;
-      fill: white;
-      max-width: 800px;
-  }
-
+  
   .fa-user {
       color: white;
   }
 
   .link_alert {
       align-items: center;
-      margin-top: 20px;
+      margin-top: 80px;
       padding: 10px 10px;
       max-width: 1000px;
       margin-left: auto;
@@ -213,6 +115,7 @@
       color: #FFFFFF;
       text-decoration: none;
       transition: color 0.3s ease;
+      cursor: pointer; 
   }
 
   .linkpage:hover {

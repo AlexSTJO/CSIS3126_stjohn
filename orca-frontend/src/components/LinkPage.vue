@@ -4,10 +4,63 @@
         <img src="../assets/orca.png" alt="Logo" class="navbar-logo" />
       </div>
       <div class="navbar-center">
-          <div class="navbar-brand">Orca</div>
+          <div class="navbar-brand">Link</div>
       </div>
       <ul class="navbar-links">
-         <li ><a @click="navigate('')">Home</a></li>
+        <button class="icon-button" @click="navigate('account-info')">
+          <svg
+            class="icon-svg"
+            xmlns="http://www.w3.org/2000/svg"
+            width="32"
+            height="32"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="white"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="12" cy="8" r="4" stroke="white" />
+            <path d="M4 20c0-4 4-7 8-7s8 3 8 7" stroke="white" />
+          </svg>
+        </button>
+
+        <button class="icon-button" @click="navigate('')">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="32"
+            height="32"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="white"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="home-icon"
+          >
+            <path d="M3 10L12 3L21 10V20A1 1 0 0 1 20 21H4A1 1 0 0 1 3 20V10Z"></path>
+            <path d="M10 21V14H14V21" stroke="white" fill="none" stroke-linecap="round"></path>   
+          </svg>
+      </button>
+      <button class="icon-button" @click="logout">
+        <svg
+          class="icon-svg"
+          xmlns="http://www.w3.org/2000/svg"
+          width="32"
+          height="32"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="white"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M9 16l-4-4 4-4" />
+          <path d="M5 12h12" />
+          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+        </svg>
+      </button>
+
       </ul>
     </nav>
 
@@ -65,7 +118,8 @@ export default {
     },
     checkLogin() {
       const token = sessionStorage.getItem("token");
-      if (!token) {
+      const link_status = sessionStorage.getItem("link_status")
+      if (!token || !link_status) {
         this.$router.push(`/`);
       }
     },
@@ -91,7 +145,7 @@ export default {
         const data = await response.json();
         if (response.ok) {
           sessionStorage.setItem("link_status", "true")
-          this.$router.push('/')
+          this.$router.push('/resource-allocation')
         } else {
           this.responseMessage = `Error: ${data.error}`;
         }
@@ -105,94 +159,7 @@ export default {
   },
 };
 </script>
-<style scoped>
-  .navbar {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px 20px;
-      background-color: #004d40;
-      color: white;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      z-index: 1000;
-      height: 60px;
-      box-sizing: border-box;
-  }
-
-
-  .navbar-left, .navbar-center, .navbar-links {
-      flex: 1;
-      display: flex;
-      align-items: center;
-  }
-
-  .navbar-center {
-      justify-content: center;
-  }
-
-
-  .navbar-logo {
-      height: 80px;
-      width: auto;
-      transition: transform 0.3s ease;
-      margin-right: 12px;
-  }
-
-  .navbar-logo:hover {
-      transform: scale(1.1);
-  }
-
-
-  .navbar-brand {
-      font-size: 1.5rem;
-      font-weight: 700;
-      white-space: nowrap;
-  }
-
-
-  .navbar-links {
-      justify-content: flex-end;
-      list-style: none;
-      margin: 0;
-      padding: 0;
-  }
-
-  .navbar-links li {
-      margin-left: 20px;
-  }
-
-  .navbar-links a {
-      color: white;
-      font-size: 1.1rem;
-      padding: 8px 14px;
-      border-radius: 6px;
-      text-decoration: none;
-      transition: transform 0.2s ease, background-color 0.3s ease;
-      white-space: nowrap;
-  }
-
-  .navbar-links a:hover {
-      background-color: white;
-      text-decoration: none;
-      color: #004d40;
-      transform: scale(1.05);
-  }
- 
-  
-  a {
-      color: #00796b;
-      text-decoration: none;
-      transition: color 0.3s ease;
-  }
-
-  a:hover {
-      color: #004d40;
-      text-decoration: underline;
-  }
+<style scoped> 
 
   .upload-container {
       padding: 30px 40px;

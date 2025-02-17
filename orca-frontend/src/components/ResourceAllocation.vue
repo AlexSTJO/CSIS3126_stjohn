@@ -1,10 +1,71 @@
 <template>
+  <nav class="navbar">
+    <div class="navbar-left">
+        <img src="../assets/orca.png" alt="Logo" class="navbar-logo" />
+    </div>
+    <div class="navbar-center">
+        <div class="navbar-brand">Cloud Resource Manager</div>
+    </div>
+    <ul class="navbar-links">
+      <button class="icon-button" @click="navigate('account-info')">
+        <svg
+          class="icon-svg"
+          xmlns="http://www.w3.org/2000/svg"
+          width="32"
+          height="32"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="white"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle cx="12" cy="8" r="4" stroke="white" />
+          <path d="M4 20c0-4 4-7 8-7s8 3 8 7" stroke="white" />
+        </svg>
+      </button>
+
+      <button class="icon-button" @click="navigate('')">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="32"
+            height="32"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="white"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="home-icon"
+          >
+            <path d="M3 10L12 3L21 10V20A1 1 0 0 1 20 21H4A1 1 0 0 1 3 20V10Z"></path>
+            <path d="M10 21V14H14V21" stroke="white" fill="none" stroke-linecap="round"></path>   
+          </svg>                    
+      </button>
+      <button class="icon-button" @click="logout">
+        <svg
+          class="icon-svg"
+          xmlns="http://www.w3.org/2000/svg"
+          width="32"
+          height="32"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="white"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M9 16l-4-4 4-4" />
+          <path d="M5 12h12" />
+          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+        </svg>
+      </button>
+
+            
+    </ul>
+  </nav>
+
   <div class="dashboard-container">
-
-    <header class="header">
-      <h1>Cloud Resource Manager</h1>
-    </header>
-
     <div class="status-section">
       <div class="status-box">
         <p><strong>Permissions Check:</strong></p>
@@ -78,6 +139,9 @@ export default {
     };
   },
   methods: {
+    navigate(page) {
+      this.$router.push(`/${page}`);
+    },
     checkLogin() {
       const token = sessionStorage.getItem("token");
       if (!token) {
@@ -176,22 +240,13 @@ export default {
     max-width: 850px;
     margin-right: auto;
     margin-left: auto;
-    margin-top: 0px;
+    margin-top: 80px;
     padding: 30px;
     padding-top:10px;
     background: white;
     border-radius: 12px;
     box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
-  }
-
-  .header h1 {
-    font-size: 2rem;
-    text-align: center;
-    color: #004d40;
-    margin-bottom: 25px;
-    font-weight: bold;
-  }
-
+  } 
   .status-section {
     background: #ffffff;
     padding: 20px;

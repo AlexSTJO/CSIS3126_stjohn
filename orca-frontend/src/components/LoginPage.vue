@@ -84,8 +84,18 @@ export default {
     },
     navigate(page) {
       this.$router.push(`/${page}`);
+    },
+    checkLogin() {
+      const token = sessionStorage.getItem("token");
+      if (token) {
+        this.navigate("");
+      }
     }
+  },
+  mounted() {
+    this.checkLogin();
   }
+  
 };
 </script>
 

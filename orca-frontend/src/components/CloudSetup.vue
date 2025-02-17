@@ -1,23 +1,67 @@
 <template>
     <div>
-        <!-- Navbar -->
         <nav class="navbar">
             <div class="navbar-left">
                 <img src="../assets/orca.png" alt="Logo" class="navbar-logo" />
             </div>
             <div class="navbar-center">
-                <div class="navbar-brand">Orca</div>
+                <div class="navbar-brand">Cloud Creation</div>
             </div>
             <ul class="navbar-links">
-                <li v-if="!isLoggedIn"><a @click="navigate('login')">Login</a></li>
-                <li v-if="!isLoggedIn"><a @click="navigate('register')">Register</a></li>
-                <li v-if="isLoggedIn">
-                    <a class="dropdown-toggle" @click="toggleDropdown">Account</a>
-                    <ul v-if="showDropdown" class="dropdown-menu">
-                        <li><a @click="navigate('profile')">Profile</a></li>
-                        <li><a @click="navigate('logout')">Logout</a></li>
-                    </ul>
-                </li>
+              <button class="icon-button" @click="navigate('account-info')">
+                <svg
+                  class="icon-svg"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="32"
+                  height="32"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="white"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="12" cy="8" r="4" stroke="white" />
+                  <path d="M4 20c0-4 4-7 8-7s8 3 8 7" stroke="white" />
+                </svg>
+              </button>
+
+              <button class="icon-button" @click="navigate('')">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="32"
+                    height="32"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="white"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="home-icon"
+                  >
+                    <path d="M3 10L12 3L21 10V20A1 1 0 0 1 20 21H4A1 1 0 0 1 3 20V10Z"></path>
+                    <path d="M10 21V14H14V21" stroke="white" fill="none" stroke-linecap="round"></path>   
+                  </svg>                    
+              </button>
+              <button class="icon-button" @click="logout">
+                  <svg
+                    class="icon-svg"
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="32"
+                    height="32"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="white"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M9 16l-4-4 4-4" />
+                    <path d="M5 12h12" />
+                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                  </svg>
+                </button>
+                    
             </ul>
         </nav>
 
@@ -33,12 +77,12 @@
                 <div v-if="activeStep === index" class="step-content">
                     <p v-html="step.content"></p>
                     <pre v-if="step.policy">{{ JSON.stringify(step.policy, null, 2) }}</pre>
-                    <button v-if="step.policy" class="copy-button" @click.stop="copyToClipboard(step.policy, index)">
+                    <button v-if="step.policy" class="button" @click.stop="copyToClipboard(step.policy, index)">
                         {{ copiedIndex === index ? 'Copied!' : 'Copy JSON' }}
                     </button>
                     <button
                         v-if="step.requiresUpload"
-                        class="upload-button"
+                        class="button"
                         @click.stop="navigateToUpload"
                     >
                         Upload Cloud Credentials
@@ -57,7 +101,6 @@ export default {
             activeStep: null,
             steps: steps,
             progress: 0,
-            showDropdown: false,
             copiedIndex: null
         };
     },
@@ -80,9 +123,6 @@ export default {
         navigateToUpload() {
             this.$router.push('/link');  
         },
-        toggleDropdown() {
-            this.showDropdown = !this.showDropdown;
-        },
         async copyToClipboard(jsonData, index) {
             try {
                 await navigator.clipboard.writeText(JSON.stringify(jsonData, null, 2));
@@ -98,117 +138,7 @@ export default {
     }
 };
 </script>
-<style scoped>
-
-  .navbar {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 20px;
-      background-color: #004d40;
-      color: white;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      z-index: 1000;
-      font-size: 0.95rem;
-      height: 50px; 
-  }
-
-
-  .navbar-logo {
-      height: 70px; 
-      width: auto;
-      position: relative;
-      top: 0px; 
-      transition: transform 0.3s ease;
-      margin: 0 10px;
-  }
-
-  .navbar-left {
-      display: flex;
-      align-items: center;
-  }
-
-  .navbar-logo:hover {
-      transform: scale(1.1);
-  }
-
-  .navbar-brand {
-      font-size: 1.4rem;
-      font-weight: 700;
-  }
-
-
-  .navbar-links {
-      display: flex;
-      list-style: none;
-      margin: 0;
-      padding: 0;
-  }
-
-  .navbar-links li {
-      position: relative;
-      margin-left: 20px;
-  }
-
-  .navbar-links a {
-      color: white;
-      padding: 8px 12px;
-      border-radius: 4px;
-      transition: background-color 0.3s ease;
-  }
-
-  .navbar-links a:hover {
-      background-color: white;
-      color: #004d40;
-  }
-
-
-  .dropdown-menu {
-      position: absolute;
-      top: 100%;
-      left: 0;
-      display: none;
-      background-color: white;
-      min-width: 180px;
-      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-      border-radius: 6px;
-      overflow: hidden;
-      z-index: 999;
-  }
-
-  .navbar-links li:hover .dropdown-menu {
-      display: block;
-      animation: dropdown-slide 0.3s ease forwards;
-  }
-
-  .dropdown-item {
-      padding: 10px 15px;
-      color: #004d40;
-      transition: background-color 0.3s ease;
-  }
-
-  .dropdown-item:hover {
-      background-color: #004d40;
-      color: white;
-  }
-
-
-  @keyframes dropdown-slide {
-      from {
-          opacity: 0;
-          transform: translateY(-10px);
-      }
-      to {
-          opacity: 1;
-          transform: translateY(0);
-      }
-  }
-
-
+<style scoped> 
   .progress-bar-container {
       position: fixed;
       top: 70px; 
@@ -218,7 +148,6 @@ export default {
       background-color: #ddd;
       z-index: 999; 
   }
-
   .progress-bar {
       height: 100%;
       background-color: #00796b;
@@ -255,6 +184,23 @@ export default {
       cursor: pointer;
       transition: transform 0.3s ease, box-shadow 0.3s ease;
   }
+  
+  pre {
+    text-align: left; 
+    white-space: pre-wrap; 
+  }
+
+  a {
+      color: #00796b;
+      text-decoration: none;
+      transition: color 0.3s ease;
+  }
+
+   a:hover {
+      color: #004d40;
+      text-decoration: underline;
+  }
+
 
   .step-card:hover {
       transform: translateY(-4px);
@@ -272,7 +218,7 @@ export default {
       font-size: 1rem;
   }
 
-  .upload-button {
+  .button {
       background-color: #00796b;
       color: white;
       font-size: 1rem;
@@ -285,7 +231,7 @@ export default {
       margin-top: 15px;
   }
 
-  .upload-button:hover {
+  .button:hover {
       background-color: #004d40;
       transform: scale(1.02);
   }
