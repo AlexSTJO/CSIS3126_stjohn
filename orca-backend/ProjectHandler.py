@@ -52,6 +52,7 @@ class ProjectHandler():
         s3_client.put_object(Bucket=bucket_name, Key=manifest_file, Body=updated_manifest)
         print(f"Manifest updated and uploaded to S3 at '{manifest_file}'.")
 
+
 def pull_creds():
     with open('../secrets.csv', newline='', encoding='utf-8-sig') as csvfile:
         reader = csv.DictReader(csvfile)

@@ -39,7 +39,7 @@ def create_session(user_id):
     cursor = conn.cursor()
 
     cursor.execute(
-            "SELECT AccessKey, SecretKeyEncrypted, EncryptionKeyId, RegionName FROM CloudCredentials WHERE UserID = %s",
+            "SELECT AccessKey, SecretKeyEncrypted, EncryptionKeyId, RegionName FROM cloud_credentials WHERE UserID = %s",
             (user_id,)
         )
     result = cursor.fetchone()
@@ -159,14 +159,14 @@ def upload_credentials():
         cursor = conn.cursor()
 
         cursor.execute(
-        "INSERT INTO CloudCredentials (UserID, AccessKey, SecretKeyEncrypted, EncryptionKeyId, RegionName) VALUES (%s,%s,%s,%s,%s)",
+        "INSERT INTO cloud_credentials (UserID, AccessKey, SecretKeyEncrypted, EncryptionKeyId, RegionName) VALUES (%s,%s,%s,%s,%s)",
         (user_id, access_key, secret_key, encryption_key_id,region_name,)
         )
         conn.commit()
         session = create_session(user_id)
         if not session:
             cursor.execute(
-                "DELETE FROM CloudCredentials WHERE UserID = %s",
+                "DELETE FROM cloud_credentials WHERE UserID = %s",
                 (user_id,)
             )
             conn.commit()
@@ -196,7 +196,7 @@ def credential_reset():
         decoded_token = retrieve_token_info(token)
         user_id = decoded_token.get("id")
         cursor.execute(
-           "DELETE FROM CloudCredentials WHERE UserID = %s",
+           "DELETE FROM cloud_credentials WHERE UserID = %s",
             (user_id,)
         )
         conn.commit()
@@ -224,7 +224,7 @@ def get_account_info():
             return jsonify({"error": "User not found"}), 404
         email = result[0]
 
-        cursor.execute('SELECT AccessKey, SecretKeyEncrypted FROM CloudCredentials WHERE UserID = %s', (user_id,))
+        cursor.execute('SELECT AccessKey, SecretKeyEncrypted FROM cloud_credentials WHERE UserID = %s', (user_id,))
         result = cursor.fetchone()
         if result:
             linked = "True"
@@ -267,10 +267,33 @@ def check_resource_existence():
         user_id = decoded_token.get("id")
         session = create_session(user_id)
         resource_manager = AWSResourceManager(session, session.region_name)
-        resource_existence = resource_manager.resource_existence() 
+        resource_existence = resource_manager.resource_existence()
+        if (resource_existence["S3"] and resource_existence["Ec2"]):
+            conn = connect_to_db()
+            cursor = conn.cursor()
+            cursor.execute('SELECT EC2_ID, S3_ID FROM cloud_info WHERE UserID =%s', (user_id,))
+            exists = cursor.fetchone()
+            if not exists:
+                cursor.execute(
+                    'INSERT INTO cloud_info (UserID, EC2_ID, S3_ID) VALUES (%s, %s, %s)',
+                    (user_id, resource_existence["Ec2"], resource_existence['S3'],)
+                )
+                conn.commit()
+            else:
+                existing_ec2, existing_s3 = exists
+                if existing_ec2 != resource_existence["Ec2"] or existing_s3 != resource_existence["S3"]:
+                    cursor.execute(
+                        "UPDATE cloud_info SET EC2_ID = %s, S3_ID = %s WHERE UserID = %s",
+                        (resource_existence["Ec2"], resource_existence["S3"], user_id,)
+                    )
+                    conn.commit()
+            cursor.close()
+            conn.close()
+
+        
         return jsonify(resource_existence), 200    
     except Exception as e:
-        return jsonify({"error": str(e)})
+        return jsonify({"error": str(e)})    
 
 @app.route('/create-resource', methods=['GET'])
 def resource_creation():
@@ -304,5 +327,6 @@ def resource_creation():
         return jsonify({'message':'success'}),200
     except Exception as e:
         return jsonify({"error": str(e)}), 400
+
 if __name__ == '__main__':
     app.run(debug=True)
