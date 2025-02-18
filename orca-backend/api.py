@@ -11,7 +11,7 @@ import os
 import boto3
 from ResourceManager import AWSResourceManager
 import botocore.exceptions
-
+from InfoHandler import InfoHandler
 load_dotenv()
 app = Flask(__name__)
 CORS(app)
@@ -62,6 +62,15 @@ def create_session(user_id):
 
     cursor.close()
     conn.close()
+
+def get_cloud_ids(user_id):
+    conn = connect_to_db()
+    cursor = conn.cursor() 
+    cursor.execute(
+        "SELECT EC2_ID, S3_ID FROM cloud_info WHERE UserID = %s",
+        (user_id,)
+    )
+    return cursor.fetchone()
 
         
 def retrieve_token_info(token):
@@ -327,6 +336,24 @@ def resource_creation():
         return jsonify({'message':'success'}),200
     except Exception as e:
         return jsonify({"error": str(e)}), 400
+
+@app.route('/list-projects', methods=['GET'])
+def list_projects():
+    token = request.headers.get('Authorization')
+    if not token:
+        return jsonify({"error": "Authorization Token Missing"}), 400
+    token = token.split(" ")[1] if "Bearer" in token else "token"    
+    try:
+        decoded_token = retrieve_token_info(token)
+        user_id = decoded_token.get("id")
+        session = create_session(user_id)
+        ec2_id, bucket_name = get_cloud_ids(user_id)
+        info_handler = InfoHandler(session, bucket_name)
+        projects = info_handler.list_projects()
+        print(projects)
+        return jsonify(projects), 200
+    except:
+        return({"error": "An Error Occured"}), 400
 
 if __name__ == '__main__':
     app.run(debug=True)

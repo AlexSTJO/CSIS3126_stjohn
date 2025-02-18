@@ -267,7 +267,7 @@ class AWSResourceManager:
             "ec2:StopInstances", "ec2:DescribeInstanceStatus", "ec2:DescribeImages", "ec2:DescribeKeyPairs",
             "ec2:AllocateAddress", "ec2:AssociateAddress", "ssm:GetParameter", "ssm:SendCommand",
             "ssm:GetCommandInvocation", "ssm:DescribeInstanceInformation", "s3:ListAllMyBuckets", "s3:CreateBucket",
-            "s3:PutObject", "iam:GetUser", "iam:GetPolicy", "iam:GetPolicyVersion"
+            "s3:PutObject","s3:ListBucket", "iam:GetUser", "iam:GetPolicy", "iam:GetPolicyVersion"
         ]
 
         attached_policies = self.check_attached_policies()

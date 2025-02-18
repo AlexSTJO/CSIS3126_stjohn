@@ -4,18 +4,16 @@ import csv
 
 
 class InfoHandler():
-    def __init__(self,session):
-        self.s3_client = session.client("s3")
-
+    def __init__(self, session, bucket_name):
+        self.s3_client = session.client("s3", region_name=session.region_name)
+        self.bucket_name = bucket_name
     def list_projects(self):
         try:
-            response = self.s3_client.list_objects_v2(Bucket=self.bucket_name)
-            if 'Contents' in response:
-                    print("Objects in the bucket:")
-                    for object in response['Contents']:
-                        print(object["Key"])
+            response = self.s3_client.list_objects_v2(Bucket=self.bucket_name, Prefix= "",Delimiter="/")
+            projects = [item['Prefix'] for item in response.get('CommonPrefixes', [])]
+            return projects
         except botocore.exceptions.ClientError as e:
-            print(f"Error listing projects: {e}")
+            return str(e)
 
 def pull_creds():
     with open('../secrets.csv', newline='', encoding='utf-8-sig') as csvfile:
@@ -35,6 +33,7 @@ if __name__ == "__main__":
         region_name="us-east-2"
     )
     
-    runner = ProjectHandler(session, "orca-s3-1738617758188", "test", False)
+    runner = InfoHandler(session, "orca-s3-1738617758188")
+    print(runner.list_projects())
     
 

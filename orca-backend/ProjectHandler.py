@@ -71,6 +71,6 @@ if __name__ == "__main__":
         region_name="us-east-2"
     )
     
-    runner = ProjectHandler(session, "orca-s3-1738617758188", "test", False)
+    runner = ProjectHandler(session, "orca-s3-1738617758188", "weird", False)
     
 
