@@ -41,7 +41,7 @@
 
   .logout-form {
       margin-top: 250px;
-      background-color: #004d40; 
+      background-color: #2a3644; 
       padding: 30px;
       border-radius: 12px;
       box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); 
@@ -60,7 +60,7 @@
   }
     
   .logout-button {
-      background-color: #E74C3C; 
+      background-color: #e57373; 
       color: white;
       font-size: 1rem;
       padding: 12px 30px;
@@ -73,7 +73,7 @@
   }
 
   .stay-button {
-      background-color: #27AE60; 
+      background-color: #66bb6a; 
       color: white;
       font-size: 1rem;
       padding: 12px 30px;

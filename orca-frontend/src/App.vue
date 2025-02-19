@@ -20,7 +20,10 @@ export default {
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   margin: 0;
-  oadding: 0;
+  padding: 0;
+}
+ html, body{
+  background: #1e272e;
 }
  .navbar {
       position: fixed;
@@ -31,7 +34,7 @@ export default {
       justify-content: space-between;
       align-items: center;
       padding: 10px 20px;
-      background-color: #004d40;
+      background-color: #232f3e;
       color: white;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
       z-index: 1000;

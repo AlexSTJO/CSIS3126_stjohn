@@ -151,85 +151,103 @@ export default {
 };
 </script>
 <style scoped>
+  
   .hub-container {
       margin-top: 130px;
       padding: 40px 30px;
       max-width: 800px;
       margin-left: auto;
       margin-right: auto;
-      background-color: white;
-      border-radius: 12px;
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+      background-color: #2a3644; 
+      border-radius: 8px; 
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+      border: 1px solid #3a4553;
       text-align: left;
+      color: #e0e6ed; 
   }
- 
-  .icon-button:hover {
-    transform: scale(1.1);
-  }
+
+  
   .linked-true {
-      color: #388e3c; 
+      color: #66bb6a !important; 
       font-weight: 600;
   }
 
   .linked-false {
-      color: #d32f2f; 
+      color: #e57373 !important; 
       font-weight: 600;
   }
 
+  
   .button-container {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 80px;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 50px; 
   }
 
+  
   .reset-button {
-      background-color: #d32f2f;
+      background-color: #e57373; 
       color: white;
       font-size: 1rem;
       padding: 12px 20px;
       border: none;
-      border-radius: 6px;
+      border-radius: 4px; 
       cursor: pointer;
       font-weight: 600;
       transition: background-color 0.3s ease, transform 0.2s ease;
       margin-top: 15px;
   }
 
+  
   .resource-manager-button {
-    background-color: #00796b;    
-    color: white;
-    font-size: 1rem;
-    padding: 12px 20px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-    margin-top: 15px;
+      background-color: #00796b;    
+      color: white;
+      font-size: 1rem;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+      margin-top: 15px;
   }
 
+  
   .reset-button:hover {
-      background-color: #b71c1c;
-      transform: scale(1.02);
+      background-color: #d32f2f;
+      transform: scale(1.03);
   }
 
   .resource-manager-button:hover {
-    background-color: #004d40;
-    transform: scale(1.02);
+      background-color: #004d40;
+      transform: scale(1.03);
   }
 
+  
   .reset-message {
-      color: #388e3c;
+      color: #66bb6a; 
       font-weight: 600;
       margin-top: 10px;
   }
 
   .error-message {
-      color: #d32f2f;
+      color: #e57373; 
       font-weight: 600;
       margin-top: 10px;
   }
-   
+
+  
+  @media (max-width: 768px) {
+      .hub-container {
+          width: 90%;
+          padding: 20px;
+      }
+
+      .button-container {
+          flex-direction: column;
+          gap: 20px;
+      }
+  }
 </style>

@@ -1,62 +1,62 @@
 <template>
-        <nav class="navbar">
-            <div class="navbar-left">
-                <img src="../assets/orca.png" alt="Logo" class="navbar-logo" />
-            </div>
-            <div class="navbar-center">
-                <div class="navbar-brand">Dashboard</div>
-            </div>
-            <ul v-if="!isLoggedIn" class="navbar-links">
-                <li><a @click="navigate('login')">Login</a></li>
-                <li><a @click="navigate('register')">Register</a></li>
-            </ul>
-            <ul v-if="isLoggedIn" class="navbar-links">
-               <button class="icon-button" @click="navigate('account-info')">
-                <svg
-                  class="icon-svg"
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="31"
-                  height="31"
-                  viewBox="-1 0 24 24"
-                  fill="none"
-                  stroke="white"
-                  stroke-width="1"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <circle cx="11" cy="8" r="4" stroke="white" />
-                  <path d="M3 20c0-4 4-7 8-7s8 3 8 7" stroke="white" />
-                </svg>
-              </button>
-              <button class="icon-button" @click="navigate('logout')">
-                <svg
-                  class="icon-svg"
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="31"
-                  height="31"
-                  viewBox="-1 0 24 24"
-                  fill="none"
-                  stroke="white"
-                  stroke-width="1"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path d="M8 16l-4-4 4-4" />
-                  <path d="M4 12h12" />
-                  <path d="M14 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
-                </svg>
-              </button>
-            </ul>
-        </nav>
-        <div v-if="!isLinked && isLoggedIn" class="link_alert">
-          <p>Your cloud is not linked, please proceed to <a class="linkpage" @click="navigate('link')">Cloud Setup</a></p>
-        </div>
-        <div class="hub-container">
-            <h1>Orca</h1>
-            <p>
-                Orca provides a streamlined solution by automating the linking, execution, and management of cloud resources.
-            </p>
-        </div>
+  <nav class="navbar">
+    <div class="navbar-left">
+        <img src="../assets/orca.png" alt="Logo" class="navbar-logo" />
+    </div>
+    <div class="navbar-center">
+        <div class="navbar-brand">Dashboard</div>
+    </div>
+    <ul v-if="!isLoggedIn" class="navbar-links">
+        <li><a @click="navigate('login')">Login</a></li>
+        <li><a @click="navigate('register')">Register</a></li>
+    </ul>
+    <ul v-if="isLoggedIn" class="navbar-links">
+       <button class="icon-button" @click="navigate('account-info')">
+        <svg
+          class="icon-svg"
+          xmlns="http://www.w3.org/2000/svg"
+          width="31"
+          height="31"
+          viewBox="-1 0 24 24"
+          fill="none"
+          stroke="white"
+          stroke-width="1"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle cx="11" cy="8" r="4" stroke="white" />
+          <path d="M3 20c0-4 4-7 8-7s8 3 8 7" stroke="white" />
+        </svg>
+      </button>
+      <button class="icon-button" @click="navigate('logout')">
+        <svg
+          class="icon-svg"
+          xmlns="http://www.w3.org/2000/svg"
+          width="31"
+          height="31"
+          viewBox="-1 0 24 24"
+          fill="none"
+          stroke="white"
+          stroke-width="1"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M8 16l-4-4 4-4" />
+          <path d="M4 12h12" />
+          <path d="M14 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+        </svg>
+      </button>
+    </ul>
+  </nav>
+  <div v-if="!isLinked && isLoggedIn" class="link_alert">
+    <p>Your cloud is not linked, please proceed to <a class="linkpage" @click="navigate('link')">Cloud Setup</a></p>
+  </div>
+  <div class="hub-container">
+      <h1>Orca</h1>
+      <p>
+          Orca provides a streamlined solution by automating the linking, execution, and management of cloud resources.
+      </p>
+  </div>
 </template>
 <script>
   export default {

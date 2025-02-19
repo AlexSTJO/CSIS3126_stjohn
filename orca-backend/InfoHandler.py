@@ -10,7 +10,7 @@ class InfoHandler():
     def list_projects(self):
         try:
             response = self.s3_client.list_objects_v2(Bucket=self.bucket_name, Prefix= "",Delimiter="/")
-            projects = [item['Prefix'] for item in response.get('CommonPrefixes', [])]
+            projects = [item['Prefix'][:-1] for item in response.get('CommonPrefixes', [])]
             return projects
         except botocore.exceptions.ClientError as e:
             return str(e)

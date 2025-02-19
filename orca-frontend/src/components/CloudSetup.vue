@@ -139,102 +139,135 @@ export default {
 };
 </script>
 <style scoped> 
+  
   .progress-bar-container {
       position: fixed;
       top: 70px; 
       left: 0;
       width: 100%;
       height: 8px;
-      background-color: #ddd;
+      background-color: #3a4553; 
       z-index: 999; 
   }
+
   .progress-bar {
       height: 100%;
-      background-color: #00796b;
+      background-color: #ffffff; 
       transition: width 0.3s ease;
   }
 
-
+  
   .hub-container {
       margin-top: 100px; 
       padding: 40px 30px;
       max-width: 850px;
       margin-left: auto;
       margin-right: auto;
-      background-color: white;
-      border-radius: 12px;
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+      background-color: #2a3644; 
+      border-radius: 8px;
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+      border: 1px solid #3a4553;
       text-align: center;
+      color: #ffffff; 
   }
+
+  
   .main-heading {
       margin-top: -20px;
-      color: #004d40;
-      font-size: 2.0rem;
+      color: #ffffff; 
+      font-size: 2rem;
       margin-bottom: 20px;
-      font-weight: 400;
+      font-weight: 600;
   }
 
-
+  
   .step-card {
       padding: 20px;
-      background-color: #e0f2f1;
-      border: 1px solid #00796b;
-      border-radius: 10px;
+      background-color: #1f2933; 
+      border: 1px solid #ffffff; 
+      border-radius: 8px;
       margin-bottom: 15px;
       cursor: pointer;
       transition: transform 0.3s ease, box-shadow 0.3s ease;
   }
+
   
-  pre {
-    text-align: left; 
-    white-space: pre-wrap; 
+  .step-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 6px 12px rgba(255, 255, 255, 0.2);
   }
 
+  
+  .step-title {
+      color: #ffffff;
+      font-size: 1.1rem;
+      font-weight: 600;
+  }
+
+  
+  .step-content {
+      margin-top: 10px;
+      color: #ffffff;
+      font-size: 1rem;
+  }
+
+  
+  pre {
+      text-align: left; 
+      white-space: pre-wrap;
+      background: #1f2933;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #ffffff;
+      color: #ffffff;
+  }
+
+  
   a {
-      color: #00796b;
+      color: #ffffff;
       text-decoration: none;
       transition: color 0.3s ease;
   }
 
-   a:hover {
-      color: #004d40;
+  a:hover {
+      color: #e0e6ed;
       text-decoration: underline;
   }
 
-
-  .step-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-  }
-
-  .step-title {
-      color: #00796b;
-      font-size: 1.0rem;
-  }
-
-  .step-content {
-      margin-top: 10px;
-      color: #333;
-      font-size: 1rem;
-  }
-
+  
   .button {
-      background-color: #00796b;
-      color: white;
+      background-color: #ffffff; 
+      color: #2a3644; 
       font-size: 1rem;
       padding: 12px 20px;
       border: none;
-      border-radius: 6px;
+      border-radius: 4px;
       cursor: pointer;
       font-weight: 600;
       transition: background-color 0.3s ease, transform 0.2s ease;
       margin-top: 15px;
   }
 
+  
   .button:hover {
-      background-color: #004d40;
-      transform: scale(1.02);
+      background-color: #e0e6ed;
+      transform: scale(1.03);
   }
-    
+
+  
+  @media (max-width: 768px) {
+      .hub-container {
+          width: 90%;
+          padding: 20px;
+      }
+
+      .step-card {
+          padding: 15px;
+      }
+
+      .button {
+          width: 100%;
+      }
+  }
 </style>
 

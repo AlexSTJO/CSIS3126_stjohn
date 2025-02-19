@@ -105,11 +105,12 @@ export default {
     justify-content: center;
     align-items: center;
     height: 100vh;
+    color: white;
   }
 
   .login-form {
     margin-top: -250px;
-    background-color: white; 
+    background-color:#3a4553;
     padding: 30px;
     border-radius: 8px;
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1); 
@@ -122,7 +123,6 @@ export default {
 
   .login-form h1 {
     font-size: 2em;
-    color: #006d5b; 
     margin-bottom: 20px;
   }
 
@@ -134,7 +134,6 @@ export default {
 
   .input-group label {
     font-weight: bold;
-    color: #333;
     margin-bottom: 5px;
     display: block;
   }
@@ -179,7 +178,7 @@ export default {
   }
 
   .login-form .signup-link a {
-    color: #006d5b;
+    color: #33a08b;
     text-decoration: none;
     font-weight: bold;
   }
