@@ -10,7 +10,9 @@ class ProjectHandler():
         if not exists:
             self.create_project(project_name)
         self.project_name = project_name
-                     
+        self.manifest_key = f"{project_name}/execution-manifest.json"
+        self.objects = self.get_project_objects()
+
     def create_project(self, project_name):
         # Creates a new folder in s3 where scripts will be stored
         try:
@@ -22,37 +24,63 @@ class ProjectHandler():
         except botocore.exceptions.ClientError as e:
             print(f"Error creating project folder: {e}")
 
+    def get_project_objects(self):
+        try:
+            objects = []
+            response = self.s3_client.list_objects_v2(Bucket=self.bucket_name, Prefix=self.project_name, Delimiter="")
+            for obj in response.get("Contents"):
+                if obj["Key"] != f"{self.project_name}/":
+                    filename = obj["Key"].split("/")[-1] 
+                    objects.append(filename)
+            return objects
+        except botocore.exceptions.ClientError as e:
+            return "Error Listing Objects"
+    
+    def add_object(self, object_name, object_file):
+       self.s3_client.put_object(Bucket=self.bucket_name, Key=f"{project_name}/{object_name}", Body=object_file) 
+    def delete_object(bucket_name, object_name):
+        try:
+            self.s3_client.delete_object(Bucket=bucket_name, Key=f"{self.manifest_key}{object_name}")
+            print(f"Deleted {object_key} from {bucket_name}")
+        except Exception as e:
+            print(f"Error deleting {object_key}: {e}")
+
     
     def generate_empty_manifest(self,project_name):
         manifest_key = f"{project_name}/execution-manifest.json"
         manifest_data = {
-            "project": project_name,
-            "tasks": []  
+            "Project": project_name,
+            "Tasks": [],
         }
 
         manifest_file = json.dumps(manifest_data, indent=4).encode('utf-8')
         self.s3_client.put_object(Bucket=self.bucket_name, Key=manifest_key, Body=manifest_file)
         print("Empty manifest created.")
-
     
-    def add_file_to_project(file_name, file_content, description=""):
-        task_key = f"{self.project_name}/"
+    def read_manifest(self):
+        response = self.s3_client.get_object(Bucket=self.bucket_name, Key=self.manifest_key)
+        manifest_content = response["Body"].read().decode("utf-8")
+        manifest_data = json.loads(manifest_content)
+        return manifest_data
+   
+    
+    def validate_and_submit_manifest(self, manifest_data):
+        expected_order = list(range(0, len(manifest_data["Tasks"])))
+        order_values = []
+        for task in manifest_data["Tasks"]:
+            print(task)
+            if not task["Name"]:
+                return "Unnamed task"
+            order_values.append(task["Order"])
 
-        s3_client.put_object(Bucket=bucket_name, Key=task_key, Body=file_content)
-        print(f"Task file '{task_key}' uploaded to S3.")
-
-        response = s3_client.get_object(Bucket=bucket_name, Key=manifest_file)
-        manifest_data = json.loads(response['Body'].read())
-
-        next_order = len(manifest_data['tasks']) + 1
-        new_task = {"key": task_key, "order": next_order, "description": description}
-        manifest_data['tasks'].append(new_task)
-
-        updated_manifest = json.dumps(manifest_data, indent=4).encode('utf-8')
-        s3_client.put_object(Bucket=bucket_name, Key=manifest_file, Body=updated_manifest)
-        print(f"Manifest updated and uploaded to S3 at '{manifest_file}'.")
-
-
+        if order_values == expected_order:
+            manifest_file = json.dumps(manifest_data, indent=4).encode('utf-8')
+            self.s3_client.put_object(Bucket=self.bucket_name, Key=self.manifest_key, Body=manifest_file)
+            return "Validated and Submitted"
+        else:
+            return "Invalid Order"
+    
+                
 def pull_creds():
     with open('../secrets.csv', newline='', encoding='utf-8-sig') as csvfile:
         reader = csv.DictReader(csvfile)
@@ -71,6 +99,15 @@ if __name__ == "__main__":
         region_name="us-east-2"
     )
     
-    runner = ProjectHandler(session, "orca-s3-1738617758188", "weird", False)
-    
+    task_info = {
+        "Name": "task3",
+        "Order": 2,
+        "Inputs": [],
+        "Outputs": [],
+        "Description": "Test Task 3"
+    }
+
+    runner = ProjectHandler(session, "orca-s3-1738617758188", "weird", True)
+    manifest_data = runner.read_manifest()
+    #print(runner.validate_and_submit_manifest(manifest_data))
 
