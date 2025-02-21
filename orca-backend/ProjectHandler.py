@@ -12,6 +12,7 @@ class ProjectHandler():
         self.project_name = project_name
         self.manifest_key = f"{project_name}/execution-manifest.json"
         self.objects = self.get_project_objects()
+        self.manifest_data = self.read_manifest()
 
     def create_project(self, project_name):
         # Creates a new folder in s3 where scripts will be stored
@@ -36,15 +37,39 @@ class ProjectHandler():
         except botocore.exceptions.ClientError as e:
             return "Error Listing Objects"
     
-    def add_object(self, object_name, object_file):
-       self.s3_client.put_object(Bucket=self.bucket_name, Key=f"{project_name}/{object_name}", Body=object_file) 
-    def delete_object(bucket_name, object_name):
+    def add_object(self, object_name, object_content, task_info):
         try:
-            self.s3_client.delete_object(Bucket=bucket_name, Key=f"{self.manifest_key}{object_name}")
-            print(f"Deleted {object_key} from {bucket_name}")
+            if object_name in self.objects:
+                return "Object already exists"
+            task_info["Order"] = len(self.objects) 
+            self.manifest_data["Tasks"].append(task_info)
+            if self.validate_and_submit_manifest():
+                self.s3_client.put_object(Bucket=self.bucket_name, Key=f"{self.project_name}/{object_name}", Body=object_content)
+                return "Object Addition Succesful"
+            else:
+                return "Error validating"
         except Exception as e:
-            print(f"Error deleting {object_key}: {e}")
+            return e
 
+    def delete_object(self, object_name):
+        try:
+            task_to_delete = None
+            for task_index in range(len(self.manifest_data["Tasks"])):
+                if self.manifest_data["Tasks"][task_index]["Name"] == object_name:
+                    task_to_delete = task_index
+                elif task_to_delete is not None:
+                    self.manifest_data["Tasks"][task_index]["Order"] -= 1
+            if task_to_delete is not None:
+                self.manifest_data["Tasks"].pop(task_to_delete)
+                if self.validate_and_submit_manifest():
+                    self.s3_client.delete_object(Bucket=self.bucket_name, Key=f"{self.project_name}/{object_name}")
+                    return "Deleted Succesfully"             
+                else:
+                    return "Ensure Order was configured again"
+            return "Task not found"
+
+        except Exception as e:
+            return e
     
     def generate_empty_manifest(self,project_name):
         manifest_key = f"{project_name}/execution-manifest.json"
@@ -64,21 +89,20 @@ class ProjectHandler():
         return manifest_data
    
     
-    def validate_and_submit_manifest(self, manifest_data):
-        expected_order = list(range(0, len(manifest_data["Tasks"])))
+    def validate_and_submit_manifest(self):
+        expected_order = list(range(1, len(self.manifest_data["Tasks"])+1))
         order_values = []
-        for task in manifest_data["Tasks"]:
-            print(task)
+        for task in self.manifest_data["Tasks"]:
             if not task["Name"]:
                 return "Unnamed task"
             order_values.append(task["Order"])
-
+            print(task)
         if order_values == expected_order:
-            manifest_file = json.dumps(manifest_data, indent=4).encode('utf-8')
+            manifest_file = json.dumps(self.manifest_data, indent=4).encode('utf-8')
             self.s3_client.put_object(Bucket=self.bucket_name, Key=self.manifest_key, Body=manifest_file)
-            return "Validated and Submitted"
+            return True
         else:
-            return "Invalid Order"
+            return False
     
                 
 def pull_creds():
@@ -98,16 +122,20 @@ if __name__ == "__main__":
         aws_secret_access_key=creds["secret_access_key"],
         region_name="us-east-2"
     )
-    
+    object_name = "test2.py"
     task_info = {
-        "Name": "task3",
-        "Order": 2,
+        "Name": object_name,
+        "Order": None,
         "Inputs": [],
         "Outputs": [],
-        "Description": "Test Task 3"
+        "Description": "test2.py"
     }
+    with open("test.py", "rb") as file:
+        file_content = file.read()
 
     runner = ProjectHandler(session, "orca-s3-1738617758188", "weird", True)
-    manifest_data = runner.read_manifest()
-    #print(runner.validate_and_submit_manifest(manifest_data))
+    
+    print(runner.delete_object("test.py"))
+    #print(runner.add_object(object_name, file_content, task_info))
+    
 
