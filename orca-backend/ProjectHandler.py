@@ -70,6 +70,27 @@ class ProjectHandler():
 
         except Exception as e:
             return e
+
+    def change_task_order(self, old_object_order, new_object_order):
+        if old_object_order in range(1, len(self.manifest_data["Tasks"])+1) and new_object_order in range(1, len(self.manifest_data["Tasks"])+1):
+            if old_object_order < new_object_order:
+                for task_index in range(len(self.manifest_data["Tasks"])):
+                    if self.manifest_data["Tasks"][task_index]["Order"] == old_object_order:
+                        self.manifest_data["Tasks"][task_index]["Order"] = new_object_order
+                    elif new_object_order >= self.manifest_data["Tasks"][task_index]["Order"] and self.manifest_data["Tasks"][task_index]["Order"] > old_object_order:
+                        self.manifest_data["Tasks"][task_index]["Order"] -= 1
+                return self.validate_and_submit_manifest()
+            elif old_object_order > new_object_order:
+                for task_index in range(len(self.manifest_data["Tasks"])):
+                    if self.manifest_data["Tasks"][task_index]["Order"] == old_object_order:
+                        self.manifest_data["Tasks"][task_index]["Order"] = new_object_order
+                    elif new_object_order <= self.manifest_data["Tasks"][task_index]["Order"] and self.manifest_data["Tasks"][task_index]["Order"] < old_object_order:
+                        self.manifest_data["Tasks"][task_index]["Order"] += 1
+                return self.validate_and_submit_manifest()
+            else:
+                return False
+        return False
+                    
     
     def generate_empty_manifest(self,project_name):
         manifest_key = f"{project_name}/execution-manifest.json"
@@ -99,7 +120,7 @@ class ProjectHandler():
             print(task)
         if order_values == expected_order:
             manifest_file = json.dumps(self.manifest_data, indent=4).encode('utf-8')
-            self.s3_client.put_object(Bucket=self.bucket_name, Key=self.manifest_key, Body=manifest_file)
+            #self.s3_client.put_object(Bucket=self.bucket_name, Key=self.manifest_key, Body=manifest_file)
             return True
         else:
             return False
@@ -122,7 +143,7 @@ if __name__ == "__main__":
         aws_secret_access_key=creds["secret_access_key"],
         region_name="us-east-2"
     )
-    object_name = "test.py"
+    object_name = "test4.py"
     task_info = {
         "Name": object_name,
         "Order": None,
@@ -136,6 +157,8 @@ if __name__ == "__main__":
     runner = ProjectHandler(session, "orca-s3-1738617758188", "weird", True)
     
     #print(runner.delete_object("test.py"))
-    print(runner.add_object(object_name, file_content, task_info))
+    #print(runner.add_object(object_name, file_content, task_info))
+    print(runner.change_task_order(4,3))
+
     
 
