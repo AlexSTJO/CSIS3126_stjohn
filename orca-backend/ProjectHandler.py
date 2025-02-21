@@ -41,7 +41,7 @@ class ProjectHandler():
         try:
             if object_name in self.objects:
                 return "Object already exists"
-            task_info["Order"] = len(self.objects) 
+            task_info["Order"] = len(self.manifest_data["Tasks"]) + 1 
             self.manifest_data["Tasks"].append(task_info)
             if self.validate_and_submit_manifest():
                 self.s3_client.put_object(Bucket=self.bucket_name, Key=f"{self.project_name}/{object_name}", Body=object_content)
@@ -122,7 +122,7 @@ if __name__ == "__main__":
         aws_secret_access_key=creds["secret_access_key"],
         region_name="us-east-2"
     )
-    object_name = "test2.py"
+    object_name = "test.py"
     task_info = {
         "Name": object_name,
         "Order": None,
@@ -130,12 +130,12 @@ if __name__ == "__main__":
         "Outputs": [],
         "Description": "test2.py"
     }
-    with open("test.py", "rb") as file:
+    with open("test2.py", "rb") as file:
         file_content = file.read()
 
     runner = ProjectHandler(session, "orca-s3-1738617758188", "weird", True)
     
-    print(runner.delete_object("test.py"))
-    #print(runner.add_object(object_name, file_content, task_info))
+    #print(runner.delete_object("test.py"))
+    print(runner.add_object(object_name, file_content, task_info))
     
 
