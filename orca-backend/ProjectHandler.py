@@ -120,11 +120,19 @@ class ProjectHandler():
             print(task)
         if order_values == expected_order:
             manifest_file = json.dumps(self.manifest_data, indent=4).encode('utf-8')
-            #self.s3_client.put_object(Bucket=self.bucket_name, Key=self.manifest_key, Body=manifest_file)
+            self.s3_client.put_object(Bucket=self.bucket_name, Key=self.manifest_key, Body=manifest_file)
             return True
         else:
             return False
-    
+   
+    def update_task_info(self, task_info):
+        for task_index in range(len(self.manifest_data["Tasks"])):
+            if self.manifest_data["Tasks"][task_index]["Name"] == task_info["Name"]:
+                task_info["Order"] = self.manifest_data["Tasks"][task_index]["Order"] 
+                self.manifest_data["Tasks"][task_index] = task_info
+                self.validate_and_submit_manifest()
+                return "Updated task info"
+        return "Did not find task"
                 
 def pull_creds():
     with open('../secrets.csv', newline='', encoding='utf-8-sig') as csvfile:
@@ -143,13 +151,13 @@ if __name__ == "__main__":
         aws_secret_access_key=creds["secret_access_key"],
         region_name="us-east-2"
     )
-    object_name = "test4.py"
+    object_name = "test3.py"
     task_info = {
         "Name": object_name,
         "Order": None,
         "Inputs": [],
         "Outputs": [],
-        "Description": "test2.py"
+        "Description": "test3.py"
     }
     with open("test2.py", "rb") as file:
         file_content = file.read()
@@ -158,7 +166,7 @@ if __name__ == "__main__":
     
     #print(runner.delete_object("test.py"))
     #print(runner.add_object(object_name, file_content, task_info))
-    print(runner.change_task_order(4,3))
+    print(runner.update_task_info(task_info))
 
     
 
