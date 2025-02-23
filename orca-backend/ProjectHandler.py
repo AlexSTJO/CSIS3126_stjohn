@@ -15,7 +15,6 @@ class ProjectHandler():
         self.manifest_data = self.read_manifest()
 
     def create_project(self, project_name):
-        # Creates a new folder in s3 where scripts will be stored
         try:
             self.s3_client.put_object(Bucket=self.bucket_name, Key=f"{project_name}/")
             print(f"Created Project {project_name}")

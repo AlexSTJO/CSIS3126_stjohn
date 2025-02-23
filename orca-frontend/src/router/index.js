@@ -8,7 +8,7 @@ import AccountInfo from '../components/AccountInfo.vue'
 import ResourceAllocation from '../components/ResourceAllocation.vue'
 import LogoutPage from '../components/LogoutPage.vue'
 import DashboardPage from '../components/DashboardPage.vue'
-
+import ProjectDashboard from '../components/ProjectDashboard.vue'
 const routes = [
   { path: '/', component: HubPage },
   { path: '/login', component:LoginPage },
@@ -18,7 +18,8 @@ const routes = [
   { path: '/account-info', component:AccountInfo},
   { path: '/resource-allocation', component:ResourceAllocation},
   { path: '/logout', component:LogoutPage},
-  { path: '/dashboard', component:DashboardPage}
+  { path: '/dashboard', component:DashboardPage},
+  { path: '/project/:projectname', component:ProjectDashboard}
 ];
 
 const router = createRouter({

@@ -50,7 +50,9 @@
         <h2>Projects</h2>
         <ul class="project-list">
           <li v-for="(project, index) in projectList" :key="index" class="project-item">
-            {{project}}
+            <router-link class="link" :to="`/project/${project}`">
+              {{ project }}
+            </router-link>         
           </li>
         </ul>
       </aside>
@@ -71,7 +73,9 @@ import { API_ENDPOINTS } from  "./constants.js";
       },
       checkLogin() {
         const token = sessionStorage.getItem("token");
-        if (!token) {
+        const link_status = sessionStorage.getItem("link_status");
+        console.log(link_status)
+        if (!token || link_status === false) {
           this.navigate('')
         }
       },
@@ -130,15 +134,16 @@ import { API_ENDPOINTS } from  "./constants.js";
   margin: 0;
 }
 
-.project-item {
+.link {
   padding: 10px 12px;
   margin: 5px 0;
   background: #37475a; 
   border: 1px solid #4a5b6a; 
+  color: white;
+  text-decoration: none;
   border-radius: 2px; 
   font-size: 1rem;
   font-weight: 500;
-  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: space-between;

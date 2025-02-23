@@ -165,7 +165,7 @@ export default {
       padding: 30px 40px;
       max-width: 800px;
       margin: 180px auto 20px auto; 
-      background-color: white;
+      background-color: #2a3644;
       border-radius: 10px;
       box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
       text-align: center;
@@ -174,7 +174,7 @@ export default {
 
   .upload-container h1 {
       font-size: 2rem;
-      color: #006d5b;
+      color: white;
       margin-bottom: 20px;
   }
 
@@ -187,7 +187,7 @@ export default {
   label {
       font-size: 1rem;
       font-weight: 600;
-      color: #004d40;
+      color: white;
       display: block;
       margin-bottom: 8px;
   }
