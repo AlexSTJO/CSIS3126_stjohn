@@ -9,5 +9,6 @@ export const API_ENDPOINTS = {
   PERMISSIONS_CHECK: `${BASE_URL}/permissions-check`,
   RESOURCE_STATUS: `${BASE_URL}/check-resource-existence`,
   RESOURCE_CREATE: `${BASE_URL}/create-resource`,
-  LIST_PROJECTS: `${BASE_URL}/list-projects`
+  LIST_PROJECTS: `${BASE_URL}/list-projects`,
+  GET_PROJECT_TASKS: `${BASE_URL}/get-project-tasks/`
 }

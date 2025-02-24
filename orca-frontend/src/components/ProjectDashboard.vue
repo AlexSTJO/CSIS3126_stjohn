@@ -64,35 +64,45 @@
   </nav>
 </template>
 <script>
+import { API_ENDPOINTS } from "./constants.js";
 export default {
   data() {
     return {
-      projectName: this.$route.params.projectname,
-      Tasks: [],
+      tasks: [],
       selectedTask: null
     }
   },
-  watch: {
-    '$route.params.projectname': async function (newProjectName) {
-      this.projectName = newProjectName;
-    }
-  },
   methods: {
+    navigate(page) {
+        this.$router.push(`/${page}`);
+    },
     checkLogin() {
       const token = sessionStorage.getItem("token");
       const link_status = sessionStorage.getItem("link_status"); 
-            if (!token || link_status === "false") {
-        this.$router.push("/")
+      if (!token || link_status === "false") {
+        this.navigate("/");
       }
     },
+    async listTasks() {
+      try {
+        console.log(this.$route.params.projectname);
+        const response = await fetch(`${API_ENDPOINTS.GET_PROJECT_TASKS}?project=${encodeURIComponent(this.$route.params.projectname)}`, {
+          headers: { "Authorization" : `Bearer ${sessionStorage.getItem("token")}`}
+        });
+        const data = await response.json();
+        if(!response.ok) throw new Error(data.error);
+        this.tasks = data;
+
+      } catch(error){
+        console.error("Error Listing Projects", error);
+      }
+    }
   },
   mounted() {
-    console.log(this.$route.params.projectname)
     this.checkLogin()
+    this.listTasks()
   }
 
 }
 </script>
-<style scoped>
   
-</style>

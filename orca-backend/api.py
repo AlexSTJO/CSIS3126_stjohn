@@ -12,6 +12,7 @@ import boto3
 from ResourceManager import AWSResourceManager
 import botocore.exceptions
 from InfoHandler import InfoHandler
+from ProjectHandler import ProjectHandler
 load_dotenv()
 app = Flask(__name__)
 CORS(app)
@@ -355,6 +356,27 @@ def list_projects():
     except:
         return({"error": "An Error Occured"}), 400
 
-
+@app.route('/get-project-tasks/', methods=['GET'])
+def get_project_tasks():
+    token = request.headers.get('Authorization')
+    if not token:
+        return jsonify({"error": "Authorization Token Missing"}), 400
+    token = token.split(" ")[1] if "Bearer" in token else "token"
+    project_name = request.args.get("project")
+    if not project_name:
+        return jsonify({"error": "Missing project name"}), 400
+    try:
+        decoded_token = retrieve_token_info(token)
+        user_id = decoded_token.get("id")
+        session = create_session(user_id)
+        ec2_id, bucket_name = get_cloud_ids(user_id)
+        info_handler = InfoHandler(session, bucket_name)
+        projects = info_handler.list_projects()
+        if project_name not in projects:
+            return jsonify({"error": "An error occurred"}), 400
+        project_handler = ProjectHandler(session, bucket_name, project_name , True)
+        return jsonify(project_handler.manifest_data["Tasks"]), 200 
+    except:
+        return({"error": "An Error Occured"}), 400
 if __name__ == '__main__':
     app.run(debug=True)
