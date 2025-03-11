@@ -133,6 +133,7 @@ class ProjectHandler():
                 return "Updated task info"
         return "Did not find task"
     
+    
                 
 def pull_creds():
     with open('../secrets.csv', newline='', encoding='utf-8-sig') as csvfile:

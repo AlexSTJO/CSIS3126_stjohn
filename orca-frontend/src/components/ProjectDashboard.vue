@@ -62,6 +62,22 @@
         </button>        
     </ul>
   </nav>
+  <div class="task-container">
+    <ul class="task-list">
+      <li v-for="task in tasks" :key="task.Name" @click="selectTask(task)">
+        <strong>{{ task.Name }}</strong>
+      </li>
+    </ul>
+
+    <div v-if="selectedTask" class="task-details">
+      <h3>Selected Task</h3>
+      <p><strong>Name:</strong> {{ selectedTask.Name }}</p>
+      <p><strong>Description:</strong> {{ selectedTask.Description }}</p>
+      <p><strong>Order:</strong> {{ selectedTask.Order }}</p>
+      <p><strong>Inputs:</strong> {{ selectedTask.Inputs.length }} items</p>
+      <p><strong>Outputs:</strong> {{ selectedTask.Outputs.length }} items</p>
+    </div>
+  </div>
 </template>
 <script>
 import { API_ENDPOINTS } from "./constants.js";
@@ -85,7 +101,6 @@ export default {
     },
     async listTasks() {
       try {
-        console.log(this.$route.params.projectname);
         const response = await fetch(`${API_ENDPOINTS.GET_PROJECT_TASKS}?project=${encodeURIComponent(this.$route.params.projectname)}`, {
           headers: { "Authorization" : `Bearer ${sessionStorage.getItem("token")}`}
         });
@@ -96,6 +111,10 @@ export default {
       } catch(error){
         console.error("Error Listing Projects", error);
       }
+    },
+    selectTask(task) {
+      this.selectedTask = task;
+      console.log("Selected Task:", task);
     }
   },
   mounted() {
@@ -105,4 +124,65 @@ export default {
 
 }
 </script>
+<style scoped> 
+  .task-container {
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;  
+  margin-top: 100px;
+  }
+ 
+  .task-list {
+  list-style: none;
+  padding: 0;
+  margin-top: 20px;
+  }
+
+  .task-list li {
+  padding: 10px 15px;
+  background: white;
+  border: 1px solid #ddd;
+  margin: 5px 0;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.2s, transform 0.1s;
+  }
+
+  .task-list li:hover {
+  background: #e3e3e3;
+  transform: scale(1.02);
+  }
+
   
+  .task-details {
+  margin-top: 20px;
+  padding: 15px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .task-details h3 {
+  margin-bottom: 10px;
+  color: #333;
+  }
+
+  .task-details p {
+  margin: 5px 0;
+  color: #555;
+  }
+
+  .task-details strong {
+  color: #000;
+  }
+
+  
+  .navbar + .task-container {
+  margin-top: 20px;
+  }
+</style> 
