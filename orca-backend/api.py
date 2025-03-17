@@ -378,5 +378,31 @@ def get_project_tasks():
         return jsonify(project_handler.manifest_data["Tasks"]), 200 
     except:
         return({"error": "An Error Occured"}), 400
+    
+@app.route('/edit-task', methods=['POST'])
+def edit_task():
+    token = request.headers.get('Authorization')
+    if not token:
+        return jsonify({"error": "Authorization Token Missing"}), 400
+    token = token.split(" ")[1] if "Bearer" in token else "token"
+    data = request.get_json()
+    project_name = data.get("project")
+    task = data.get("task")
+    if not project_name or not task:
+        return jsonify({"error": "Missing project name or task"}), 400
+    try:
+        decoded_token = retrieve_token_info(token)
+        user_id = decoded_token.get("id")
+        session = create_session(user_id)
+        ec2_id, bucket_name = get_cloud_ids(user_id)
+        info_handler = InfoHandler(session, bucket_name)
+        projects = info_handler.list_projects()
+        if project_name not in projects:
+            return jsonify({"error": "An error occurred"}), 400
+        project_handler = ProjectHandler(session, bucket_name, project_name, True)
+        project_handler.edit_task(task)
+        return jsonify({"message": "Task edited successfully"}), 200
+    except:
+        return jsonify({"error": "An error occurred"}), 400
 if __name__ == '__main__':
     app.run(debug=True)
