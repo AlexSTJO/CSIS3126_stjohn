@@ -116,7 +116,6 @@ class ProjectHandler():
             if not task["Name"]:
                 return "Unnamed task"
             order_values.append(task["Order"])
-            print(task)
         if order_values == expected_order:
             manifest_file = json.dumps(self.manifest_data, indent=4).encode('utf-8')
             self.s3_client.put_object(Bucket=self.bucket_name, Key=self.manifest_key, Body=manifest_file)
@@ -129,8 +128,10 @@ class ProjectHandler():
             if self.manifest_data["Tasks"][task_index]["Name"] == task_info["Name"]:
                 task_info["Order"] = self.manifest_data["Tasks"][task_index]["Order"] 
                 self.manifest_data["Tasks"][task_index] = task_info
-                self.validate_and_submit_manifest()
-                return "Updated task info"
+                if self.validate_and_submit_manifest():
+                    return "Updated task info"
+                else:
+                    return "Invalid Task Info"
         return "Did not find task"
     
     

@@ -386,8 +386,9 @@ def edit_task():
         return jsonify({"error": "Authorization Token Missing"}), 400
     token = token.split(" ")[1] if "Bearer" in token else "token"
     data = request.get_json()
-    project_name = data.get("project")
-    task = data.get("task")
+    project_info = data.get('project_info')
+    project_name = project_info["Project"]
+    task = data.get('selectedTask')
     if not project_name or not task:
         return jsonify({"error": "Missing project name or task"}), 400
     try:
@@ -396,11 +397,15 @@ def edit_task():
         session = create_session(user_id)
         ec2_id, bucket_name = get_cloud_ids(user_id)
         info_handler = InfoHandler(session, bucket_name)
-        projects = info_handler.list_projects()
+        projects = info_handler.list_projects() 
         if project_name not in projects:
             return jsonify({"error": "An error occurred"}), 400
         project_handler = ProjectHandler(session, bucket_name, project_name, True)
-        project_handler.edit_task(task)
+        if (project_handler.update_task_info(task) =="Invalid Info"):
+            return jsonify({"error": "Invalid Info"}), 400
+        elif  (project_handler.update_task_info(task) =="Did not find task"):
+            return jsonify({"error": "Task Not Found"}), 400
+
         return jsonify({"message": "Task edited successfully"}), 200
     except:
         return jsonify({"error": "An error occurred"}), 400
