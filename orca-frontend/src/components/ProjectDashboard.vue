@@ -8,42 +8,97 @@
     </div>
     <ul class="navbar-links">
       <button class="icon-button" @click="navigate('account-info')">
-        <svg class="icon-svg" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+        <svg
+          class="icon-svg"
+          xmlns="http://www.w3.org/2000/svg"
+          width="32"
+          height="32"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="white"
+          stroke-width="1"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
           <circle cx="12" cy="8" r="4" stroke="white" />
-          <path d="M4 20c0-4 4-7 8-7s8 3 8 7" />
+          <path d="M4 20c0-4 4-7 8-7s8 3 8 7" stroke="white" />
         </svg>
       </button>
+
+      <button class="icon-button" @click="navigate('')">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="32"
+            height="32"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="white"
+            stroke-width="1"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="home-icon"
+          >
+            <path d="M3 10L12 3L21 10V20A1 1 0 0 1 20 21H4A1 1 0 0 1 3 20V10Z"></path>
+            <path d="M10 21V14H14V21" stroke="white" fill="none" stroke-linecap="round"></path>   
+          </svg>                    
+      </button>
+      <button class="icon-button" @click="navigate('logout')">
+          <svg
+            class="icon-svg"
+            xmlns="http://www.w3.org/2000/svg"
+            width="32"
+            height="32"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="white"
+            stroke-width="1"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M9 16l-4-4 4-4" />
+            <path d="M5 12h12" />
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+          </svg>
+        </button>
+            
     </ul>
-  </nav>
+</nav>
 
   <div class="container">
     <aside class="sidebar">
-      <h2>Tasks</h2>
-      <ul class="project-list">
-        <li v-for="task in tasks" :key="task.Name" :class="{'selected': task === selectedTask}" class="link" @click="selectTask(task)">
-          {{ task.Name }}
-        </li>
-      </ul>
-    </aside>
+      <div class="sidebar-content">
+        <!-- Scrollable Task List -->
+        <ul class="project-list">
+          <li 
+            v-for="task in tasks" 
+            :key="task.Name" 
+            :class="{ 'selected': task === selectedTask }" 
+            class="link" 
+            @click="selectTask(task)">
+            {{ task.Name }}
+          </li>
+        </ul>
 
+        <!-- Fixed Actions -->
+        <div class="sidebar-actions">
+          <button class="action-btn" @click="addTask">Add Task</button>
+          <button class="action-btn" @click="removeTask" :disabled="!selectedTask">Remove Task</button>
+          <button class="action-btn" @click="runPipeline">Run Pipeline</button>
+        </div>
+      </div>
+    </aside>
     <transition name="fade" mode="out-in">
       <div class="task-details" v-if="selectedTask" key="task-details">
         <div class="task-details-container">
           <div class="task-info">
             <div class="task-row">
               <strong>Name:</strong>
-              <input v-if="isEditing" v-model="selectedTask.Name" class="edit-field" />
-              <span v-else>{{ selectedTask.Name }}</span>
-            </div>
+              <span>{{ selectedTask.Name }}</span>
+            </div>          
             <div class="task-row">
               <strong>Description:</strong> 
               <textarea v-if="isEditing" v-model="selectedTask.Description" class="edit-field"></textarea>
               <span v-else>{{ selectedTask.Description }}</span>
-            </div>
-            <div class="task-row">
-              <strong>Order:</strong> 
-              <input v-if="isEditing" type="number" v-model="selectedTask.Order" class="edit-field" />
-              <span v-else>{{ selectedTask.Order }}</span>
             </div>
           </div>
         <div class="task-sections">
@@ -75,21 +130,30 @@
         <button class="task-button" @click="toggleEditMode">{{ isEditing ? 'Save' : 'Edit' }}</button>
       </div>
     </div>
-
-    </transition>
+  </transition>
   </div>
+  <AddTaskModal
+      v-if="showAddTaskModal"
+      @close="showAddTaskModal = false"
+      @create="handleTaskCreate"
+  />
+
 </template>
 
 <script>
 import { API_ENDPOINTS } from "./constants.js";
-
+import AddTaskModal from './AddTaskModal.vue';
 export default {
+  components: {
+    AddTaskModal
+  },
   data() {
     return {
       tasks: [],
       selectedTask: null,
       isEditing: false,
-      project_info: {"Project": this.$route.params.projectname}
+      project_info: {"Project": this.$route.params.projectname},
+      showAddTaskModal: false,
     };
   },
   methods: {
@@ -157,13 +221,16 @@ export default {
     addOutput() {
       if (this.selectedTask) {
         this.selectedTask.Outputs.push("");
-      }
+  }
     },
     removeOutput(index) {
       if (this.selectedTask) {
         this.selectedTask.Outputs.splice(index, 1);
       }
-    }
+    },
+    addTask() {
+    this.showAddTaskModal = true;
+    },
   },
   mounted() {
     this.checkLogin();
@@ -176,32 +243,75 @@ export default {
 <style scoped>
   .container {
     display: flex;
-    height: 100vh;
+    height: 90vh;
     padding: 20px; 
   }
 
-  .sidebar {
+   .sidebar {
+    display: flex;
+    flex-direction: column;
     margin-top: 80px;
+    height: 90vh;
     width: 280px;
-    background: #1f2937; 
+    background: #1f2937;
     color: white;
     padding: 20px;
-    height: 100vh;
-    overflow-y: auto;
     border-right: 1px solid #374151;
-    transition: all 0.3s;
   }
 
-  .sidebar h2 {
-    font-size: 1.5rem;
-    margin-bottom: 15px;
-    text-align: center;
+  .sidebar-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
 
   .project-list {
-    list-style: none;
+    flex: 1;
+    overflow-y: auto;
+    margin: 0;
     padding: 0;
   }
+
+  .sidebar-actions {
+    padding-top: 10px;
+    border-top: 1px solid #374151;
+    background: #1f2937;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .action-btn {
+    background: #334155;
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.3s;
+  }
+
+  .action-btn:hover {
+    background: #475569;
+  }
+  .action-btn {
+    background: #334155;
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.3s;
+  }
+
+  .action-btn:disabled {
+    background: #4b5563;
+    cursor: not-allowed;
+  }
+ 
 
   .link {
     padding: 12px;
@@ -223,7 +333,6 @@ export default {
   }
 
   .task-details-container {
-    margin-top: -300px;
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -311,7 +420,7 @@ export default {
   }
  
   .task-button {
-    background: #334155;
+    background: #006d5b;
     width: 100%;
     color: white;
     padding: 12px 25px;
@@ -337,7 +446,7 @@ export default {
   }
 
   .task-button:hover {
-    background: #475569;
+    background: #004d40;
   }
   .remove-btn {
     background: #e53e3e;
