@@ -398,8 +398,11 @@ def edit_task():
         ec2_id, bucket_name = get_cloud_ids(user_id)
         info_handler = InfoHandler(session, bucket_name)
         projects = info_handler.list_projects() 
+
+        # THIS VALIDATION IS PROBABLY NOT NECESSARY
         if project_name not in projects:
             return jsonify({"error": "An error occurred"}), 400
+
         project_handler = ProjectHandler(session, bucket_name, project_name, True)
         if (project_handler.update_task_info(task) =="Invalid Info"):
             return jsonify({"error": "Invalid Info"}), 400
@@ -409,5 +412,34 @@ def edit_task():
         return jsonify({"message": "Task edited successfully"}), 200
     except:
         return jsonify({"error": "An error occurred"}), 400
+
+@app.route('/add-task', methods=['POST'])
+def add_task():
+    token = request.headers.get('Authorization')
+    if not token:
+        return jsonify({"error": "Authorization Token Missing"}), 400
+    token = token.split(" ")[1] if "Bearer" in token else "token"
+    data = request.get_json()
+    project_info = data.get('project_info')
+    project_name = project_info["Project"]
+    task_info = data.get('task_info')
+    file_content = data.get('file_content')
+    if not project_name or not task:
+        return jsonify({"error": "Missing project name or task"}), 400
+    try:
+        decoded_token = retrieve_token_info(token)
+        user_id = decoded_token.get("id")
+        session = create_session(user_id)
+        ec2_id, bucket_name = get_cloud_ids(user_id)            
+        project_handler = ProjectHandler(session,bucket_name,project_name, False)
+        response = project_handler.add_object(task_info["Name"], file_content, task_info)
+        if response == "Object Addition Succesful":
+            return jsonify({"message", "Objects Added Succesfully"}), 200
+        elif response == "Error Validating":
+            return jsonify({"error", "Task Information Incorrect"}), 400
+        else:
+            return jsonify({"error", "An Error Occured"})
+
+# ON OBJECT DELETE WE CAN CHANGE TASK ORDER TO LAST
 if __name__ == '__main__':
     app.run(debug=True)
