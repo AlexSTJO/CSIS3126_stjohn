@@ -11,5 +11,6 @@ export const API_ENDPOINTS = {
   RESOURCE_CREATE: `${BASE_URL}/create-resource`,
   LIST_PROJECTS: `${BASE_URL}/list-projects`,
   GET_PROJECT_TASKS: `${BASE_URL}/get-project-tasks/`,
-  EDIT_TASK: `${BASE_URL}/edit-task`
+  EDIT_TASK: `${BASE_URL}/edit-task`,
+  ADD_TASK: `${BASE_URL}/add-task`
 }

@@ -231,12 +231,61 @@ export default {
     addTask() {
     this.showAddTaskModal = true;
     },
+    handleTaskCreate(task) {
+      const reader = new FileReader();
+
+      reader.onload = async () => {
+        const fileContent = reader.result;
+
+        const payload = {
+          project_info: this.project_info,
+          task_info: {
+            Name: task.Name,
+            Description: task.Description,
+            Inputs: task.Inputs,
+            Outputs: task.Outputs
+          },
+          file_content: fileContent
+        };
+
+        try {
+          const response = await fetch(`${API_ENDPOINTS.ADD_TASK}`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${sessionStorage.getItem('token')}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+          });
+
+          const result = await response.json();
+
+          if (!response.ok) {
+            console.error("Error from API:", result.error);
+            alert(result.error || "Failed to add task.");
+            return;
+          }
+   
+          this.tasks.push(task);
+          this.selectedTask = task;
+          this.isEditing = true;
+          console.log("Task added successfully");
+
+        } catch (err) {
+          console.error("Network/Parsing error:", err);
+          alert("Something went wrong while adding the task.");
+        }
+    };
+
+    reader.readAsText(task.File);
+    }
+
   },
   mounted() {
     this.checkLogin();
     this.listTasks();
-  }
-};
+  },
+ };
 </script>
 
 

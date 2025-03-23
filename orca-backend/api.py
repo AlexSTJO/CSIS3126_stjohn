@@ -424,22 +424,24 @@ def add_task():
     project_name = project_info["Project"]
     task_info = data.get('task_info')
     file_content = data.get('file_content')
-    if not project_name or not task:
+    if not project_name or not task_info or not file_content:
         return jsonify({"error": "Missing project name or task"}), 400
     try:
         decoded_token = retrieve_token_info(token)
         user_id = decoded_token.get("id")
         session = create_session(user_id)
         ec2_id, bucket_name = get_cloud_ids(user_id)            
-        project_handler = ProjectHandler(session,bucket_name,project_name, False)
+        project_handler = ProjectHandler(session,bucket_name,project_name, True)
         response = project_handler.add_object(task_info["Name"], file_content, task_info)
-        if response == "Object Addition Succesful":
-            return jsonify({"message", "Objects Added Succesfully"}), 200
+        print(response)
+        if response == "Object Addition Successful":
+            return jsonify({"message": "Objects Added Successfully"}), 200
         elif response == "Error Validating":
-            return jsonify({"error", "Task Information Incorrect"}), 400
+            return jsonify({"error": "Task Information Incorrect"}), 400
         else:
-            return jsonify({"error", "An Error Occured"})
-
+            return jsonify({"error": "An Error Occured"}), 400
+    except:
+         return jsonify({"error": "An Error Occured"}), 400
 # ON OBJECT DELETE WE CAN CHANGE TASK ORDER TO LAST
 if __name__ == '__main__':
     app.run(debug=True)

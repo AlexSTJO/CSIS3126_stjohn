@@ -44,7 +44,7 @@ class ProjectHandler():
             self.manifest_data["Tasks"].append(task_info)
             if self.validate_and_submit_manifest():
                 self.s3_client.put_object(Bucket=self.bucket_name, Key=f"{self.project_name}/{object_name}", Body=object_content)
-                return "Object Addition Succesful"
+                return "Object Addition Successful"
             else:
                 return "Error validating"
         except Exception as e:
