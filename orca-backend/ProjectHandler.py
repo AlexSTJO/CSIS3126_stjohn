@@ -62,7 +62,7 @@ class ProjectHandler():
                 self.manifest_data["Tasks"].pop(task_to_delete)
                 if self.validate_and_submit_manifest():
                     self.s3_client.delete_object(Bucket=self.bucket_name, Key=f"{self.project_name}/{object_name}")
-                    return "Deleted Succesfully"             
+                    return "Deleted Successfully"             
                 else:
                     return "Ensure Order was configured again"
             return "Task not found"

@@ -12,5 +12,6 @@ export const API_ENDPOINTS = {
   LIST_PROJECTS: `${BASE_URL}/list-projects`,
   GET_PROJECT_TASKS: `${BASE_URL}/get-project-tasks/`,
   EDIT_TASK: `${BASE_URL}/edit-task`,
-  ADD_TASK: `${BASE_URL}/add-task`
+  ADD_TASK: `${BASE_URL}/add-task`,
+  REMOVE_TASK: `${BASE_URL}/remove-task`
 }

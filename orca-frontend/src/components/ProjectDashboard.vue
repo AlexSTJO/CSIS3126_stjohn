@@ -137,15 +137,23 @@
       @close="showAddTaskModal = false"
       @create="handleTaskCreate"
   />
-
+  <TaskDeletionModal
+    v-if="showTaskDeletionModal"
+    :taskName="selectedTask?.Name"
+    @close="showTaskDeletionModal = false"
+    @confirm="handleTaskDelete"
+  />"
+  />
 </template>
 
 <script>
 import { API_ENDPOINTS } from "./constants.js";
 import AddTaskModal from './AddTaskModal.vue';
+import TaskDeletionModal from './TaskDeletionModal.vue';
 export default {
   components: {
-    AddTaskModal
+    AddTaskModal,
+    TaskDeletionModal
   },
   data() {
     return {
@@ -154,6 +162,8 @@ export default {
       isEditing: false,
       project_info: {"Project": this.$route.params.projectname},
       showAddTaskModal: false,
+      showTaskDeletionModal: false,
+      taskToDelete: null,
     };
   },
   methods: {
@@ -187,11 +197,11 @@ export default {
       this.selectedTask = task;
       console.log("Selected Task:", task);
     },
-    toggleEditMode() {
+    async toggleEditMode() {
       if (this.isEditing) {
         console.log(this.project_info)
         try {
-            const response = fetch(`${API_ENDPOINTS.EDIT_TASK}`,{
+            const response = await fetch(`${API_ENDPOINTS.EDIT_TASK}`,{
             method: 'POST',
             headers: { "Authorization" : `Bearer ${sessionStorage.getItem("token")}`,
             'Content-Type': 'application/json',},
@@ -229,7 +239,11 @@ export default {
       }
     },
     addTask() {
-    this.showAddTaskModal = true;
+      this.showAddTaskModal = true;
+    },
+    removeTask() {
+      this.taskToDelete = this.selectedTask;
+      this.showTaskDeletionModal = true;
     },
     handleTaskCreate(task) {
       const reader = new FileReader();
@@ -278,8 +292,46 @@ export default {
     };
 
     reader.readAsText(task.File);
-    }
+    },
+    async handleTaskDelete(taskName) {
+      try {
+        const payload = {
+          project_info: this.project_info,
+          task_info: {
+            Name: taskName
+          }
+        };
 
+        const response = await fetch(`${API_ENDPOINTS.REMOVE_TASK}`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${sessionStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          console.error("Error:", result.error);
+          alert(result.error || "Failed to delete task.");
+          return;
+        }
+
+        this.tasks = this.tasks.filter(task => task.Name !== taskName);
+        if (this.selectedTask?.Name === taskName) {
+          this.selectedTask = null;
+        }
+
+        this.showTaskDeletionModal = false;
+        console.log("Task deleted successfully");
+
+      } catch (err) {
+        console.error("Error deleting task:", err);
+        alert("Something went wrong while deleting the task.");
+      }
+    }
   },
   mounted() {
     this.checkLogin();

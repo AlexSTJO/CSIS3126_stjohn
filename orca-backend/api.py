@@ -79,7 +79,6 @@ def retrieve_token_info(token):
         decoded = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
         return decoded
     except jwt.ExpiredSignatureError:
-        print('here')
         raise jwt.ExpiredSignatureError("Token has expired")
     except jwt.InvalidTokenError:
         raise jwt.InvalidTokenError("Invalid token")
@@ -210,7 +209,7 @@ def credential_reset():
             (user_id,)
         )
         conn.commit()
-        return jsonify({'message': 'Credentials Succesfully Reset'}), 201
+        return jsonify({'message': 'Credentials Successfully Reset'}), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
@@ -351,7 +350,6 @@ def list_projects():
         ec2_id, bucket_name = get_cloud_ids(user_id)
         info_handler = InfoHandler(session, bucket_name)
         projects = info_handler.list_projects()
-        print(projects)
         return jsonify(projects), 200
     except:
         return({"error": "An Error Occured"}), 400
@@ -442,6 +440,36 @@ def add_task():
             return jsonify({"error": "An Error Occured"}), 400
     except:
          return jsonify({"error": "An Error Occured"}), 400
+
+@app.route('/remove-task', methods=['POST'])
+def remove_task():
+    token = request.headers.get('Authorization')
+    if not token:
+        return jsonify({"error": "Authorization Token Missing"}), 400
+    token = token.split(" ")[1] if "Bearer" in token else "token"
+    data = request.get_json()
+    project_info = data.get('project_info')
+    project_name = project_info["Project"]
+    task_info = data.get('task_info')
+    task_name = task_info["Name"]
+    if not project_name or not task_name:
+        return jsonify({"error": "Missing project name or task info"}), 400
+    try:
+        decoded_token = retrieve_token_info(token)
+        user_id = decoded_token.get("id")
+        session = create_session(user_id)
+        ec2_id, bucket_name = get_cloud_ids(user_id)            
+        project_handler = ProjectHandler(session,bucket_name,project_name, True)
+        response = project_handler.delete_object(task_name)
+        if response == "Deleted Successfully":
+            return jsonify({"message": "Deleted Successfully"}), 200
+        elif response == "Ensure Order was configured again":
+            return jsonify({"error": "Ensure Order Configurations"}), 400
+        else:
+            return jsonify({"error": "An Error Occured"}), 400
+    except:
+        return jsonify({"error": "An Error Occured"}), 400
+        
 # ON OBJECT DELETE WE CAN CHANGE TASK ORDER TO LAST
 if __name__ == '__main__':
     app.run(debug=True)
