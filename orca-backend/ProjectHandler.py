@@ -134,6 +134,11 @@ class ProjectHandler():
                     return "Invalid Task Info"
         return "Did not find task"
     
+    def update_all_task_info(self, tasks):
+        self.manifest_data["Tasks"] = tasks
+        if self.validate_and_submit_manifest():
+            return "Success"
+        return "Error"    
     
                 
 def pull_creds():

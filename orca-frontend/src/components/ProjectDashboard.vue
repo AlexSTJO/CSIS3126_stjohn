@@ -62,23 +62,21 @@
         </button>
             
     </ul>
-</nav>
+  </nav>
 
   <div class="container">
     <aside class="sidebar">
       <div class="sidebar-content">
-        <!-- Scrollable Task List -->
-        <ul class="project-list">
-          <li 
-            v-for="task in tasks" 
-            :key="task.Name" 
-            :class="{ 'selected': task === selectedTask }" 
-            class="link" 
-            @click="selectTask(task)">
-            {{ task.Name }}
-          </li>
-        </ul>
-
+        <!-- Draggable Task List -->
+        <draggable v-model="tasks" item-key="Name" @end="updateTaskOrder">
+          <template #item="{ element }">
+            <li :class="{ 'selected': element === selectedTask }" 
+                class="link draggable-item" 
+                @click="selectTask(element)">
+              {{ element.Name }}
+            </li>
+          </template>
+        </draggable>
         <!-- Fixed Actions -->
         <div class="sidebar-actions">
           <button class="action-btn" @click="addTask">Add Task</button>
@@ -86,7 +84,7 @@
           <button class="action-btn" @click="runPipeline">Run Pipeline</button>
         </div>
       </div>
-    </aside>
+    </aside>   
     <transition name="fade" mode="out-in">
       <div class="task-details" v-if="selectedTask" key="task-details">
         <div class="task-details-container">
@@ -127,10 +125,10 @@
           </div>
         </div>
       
-        <button class="task-button" @click="toggleEditMode">{{ isEditing ? 'Save' : 'Edit' }}</button>
+          <button class="task-button" @click="toggleEditMode">{{ isEditing ? 'Save' : 'Edit' }}</button>
+        </div>
       </div>
-    </div>
-  </transition>
+    </transition>
   </div>
   <AddTaskModal
       v-if="showAddTaskModal"
@@ -142,7 +140,6 @@
     :taskName="selectedTask?.Name"
     @close="showTaskDeletionModal = false"
     @confirm="handleTaskDelete"
-  />"
   />
 </template>
 
@@ -150,10 +147,13 @@
 import { API_ENDPOINTS } from "./constants.js";
 import AddTaskModal from './AddTaskModal.vue';
 import TaskDeletionModal from './TaskDeletionModal.vue';
+import Draggable from "vuedraggable";
+import _ from "lodash";
 export default {
   components: {
     AddTaskModal,
-    TaskDeletionModal
+    TaskDeletionModal,
+    Draggable
   },
   data() {
     return {
@@ -185,7 +185,7 @@ export default {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error);
         this.tasks = data;
-
+        console.log(this.tasks)
         if (this.tasks.length > 0) {
           this.selectedTask = this.tasks[0];
         }
@@ -211,6 +211,7 @@ export default {
             console.error("error")
           } else {
             console.log("success")
+            await this.listTasks();
           }
         } catch {
           console.log("An Error")
@@ -284,6 +285,7 @@ export default {
           this.selectedTask = task;
           this.isEditing = true;
           console.log("Task added successfully");
+          await this.listTasks();
 
         } catch (err) {
           console.error("Network/Parsing error:", err);
@@ -326,17 +328,51 @@ export default {
 
         this.showTaskDeletionModal = false;
         console.log("Task deleted successfully");
+        await this.listTasks();
 
       } catch (err) {
         console.error("Error deleting task:", err);
         alert("Something went wrong while deleting the task.");
       }
-    }
+    },
+    async updateTaskOrder() {
+      this.tasks.forEach((task, index) => {
+        task.Order = index + 1; 
+      });
+
+      console.log("Updated task order:", this.tasks);
+
+      this.debouncedUpdate(); // Call the debounced function
+    },
+    async sendUpdateTaskOrder() {
+      try {
+        const response = await fetch(`${API_ENDPOINTS.UPDATE_TASK_ORDER}`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${sessionStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ project_info: this.project_info, tasks: this.tasks })
+        });
+
+        const result = await response.json();
+        if (!response.ok) {
+          console.error("Error updating task order:", result.error);
+        } else {
+          console.log("Task order updated successfully.");
+        }
+      } catch (err) {
+        console.error("Network error while updating task order:", err);
+      }
+    } 
   },
   mounted() {
     this.checkLogin();
     this.listTasks();
   },
+  created() {
+    this.debouncedUpdate = _.debounce(this.sendUpdateTaskOrder, 1000);
+  }
  };
 </script>
 
@@ -365,6 +401,7 @@ export default {
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    justify-content: space-between;
   }
 
   .project-list {
