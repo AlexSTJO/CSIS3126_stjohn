@@ -3,6 +3,7 @@ import botocore.exceptions
 import csv
 import json
 import time
+from datetime import datetime
 class OrcaRunner:
     def __init__(self, session, bucket_name, instance_id, project_name):
         self.ec2_client = session.client('ec2')
@@ -21,63 +22,124 @@ class OrcaRunner:
         return manifest_data
 
 
-    def handle_manifest(self):
+    def handle_runtime(self):
+        run_id = datetime.utcnow().strftime("%Y%m%d-%H%M%S")
+        print(f"[PIPELINE] Run ID: {run_id}")
+
         ordered_tasks = sorted(self.manifest_data['Tasks'], key=lambda task: task['Order']) 
+        self.bootstrap_instance()
 
-        for task in ordered_tasks:
-            self.invoke_script(task["Name"])
-
-
-        
+        for index, task in enumerate(ordered_tasks):
+            self.invoke_script(task, run_id=run_id, task_index=index)
 
 
-
-    def invoke_script(self, file_name):
-        ssm_client = self.ssm_client
-
-        script_s3_path = f"s3://{self.bucket_name}/{self.project_name}/{file_name}"
-
+    def bootstrap_instance(self):
         commands = [
-            f"aws s3 cp {script_s3_path} /tmp/script.py",
-            'python3 /tmp/script.py'
+            'rm -rf /tmp/orca',                     
+            'mkdir -p /tmp/orca',
+            'yum install -y jq python3 python3-pip',
+            'python3 -m venv /tmp/venv',
+            f"aws s3 cp s3://{self.bucket_name}/{self.project_name}/dependencies.txt /tmp/orca/requirements.txt || true",
+            '/tmp/venv/bin/pip install --upgrade pip',
+            '/tmp/venv/bin/pip install -r /tmp/orca/requirements.txt || true',
+            'rm /tmp/orca/requirements.txt'
         ]
 
-        response = ssm_client.send_command(
+        response = self.ssm_client.send_command(
             InstanceIds=[self.instance_id],
             DocumentName='AWS-RunShellScript',
             Parameters={'commands': commands},
         )
 
         command_id = response['Command']['CommandId']
-        print(f"Command sent. Command ID: {command_id}")
+        print(f"[BOOTSTRAP] Command sent. ID: {command_id}")
 
+        return self._wait_for_command(command_id)
+   
 
-        time.sleep(3)
+    def invoke_script(self, task, run_id, task_index):
+        file_name = task["Name"]
+        inputs = task.get("Inputs", [])
+        script_base = file_name.replace('.py', '')
+        outputs_path = f"s3://{self.bucket_name}/{self.project_name}/outputs/{run_id}/{script_base}/"
+        log_path = f"s3://{self.bucket_name}/{self.project_name}/logs/{run_id}/log-{file_name}.json"
+        script_path = f"s3://{self.bucket_name}/{self.project_name}/{file_name}"
+
+        commands = []
+
+        commands.append(f"aws s3 cp {script_path} /tmp/orca/script.py")
+
+        commands += self.resolve_input_downloads(run_id, task_index, inputs)
+
+        commands += [
+            'source /tmp/venv/bin/activate',
+            'output=$(/tmp/venv/bin/python /tmp/orca/script.py 2>&1); exit_code=$?',
+            'log=$(jq -n --arg out "$output" --argjson code "$exit_code" '
+            '\'{"stdout": $out, "stderr": "", "exit_code": $code}\')',
+            'echo "$log" > /tmp/orca/log.json',
+            f"aws s3 cp /tmp/orca/log.json {log_path}",
+
+            f'for file in $(find /tmp/orca -type f ! -name "script.py" ! -name "log.json"); do '
+            f'aws s3 cp "$file" {outputs_path}$(basename $file); done'
+        ]
+
+        response = self.ssm_client.send_command(
+            InstanceIds=[self.instance_id],
+            DocumentName='AWS-RunShellScript',
+            Parameters={'commands': commands},
+        )
+
+        command_id = response['Command']['CommandId']
+        print(f"[SCRIPT] Command sent. ID: {command_id} for task: {file_name}")
+
+        return self._wait_for_command(command_id)
+
+    def _wait_for_command(self, command_id):
+    
+        time.sleep(2)
         while True:
-            output = ssm_client.list_command_invocations(
+            result = self.ssm_client.list_command_invocations(
                 CommandId=command_id,
                 InstanceId=self.instance_id,
                 Details=True
             )
 
-            if output['CommandInvocations']:
-                    status = output['CommandInvocations'][0]['Status']
-                    if status in ['InProgress', 'Pending']:
-                        print(f"Command is still running. Status: {status}")
-                        time.sleep(2)
-                        continue
-                    elif status == 'Success':
-                        print('Command executed successfully.')
-                        stdout = output['CommandInvocations'][0]['CommandPlugins'][0]['Output']
-                        print('Command Output:')
-                        print(stdout)
-                        return stdout
-                    else:
-                        print(f"Command failed with status: {status}")
-                        stderr = output['CommandInvocations'][0]['CommandPlugins'][0]['Output']
-                        print('Error Output:')
-                        print(stderr)
-                        return stderr
+            if not result['CommandInvocations']:
+                print("No output yet, waiting...")
+                time.sleep(2)
+                continue
+
+            status = result['CommandInvocations'][0]['Status']
+            if status in ['Pending', 'InProgress']:
+                print(f"Command running... Status: {status}")
+                time.sleep(2)
+                continue
+
+            output = result['CommandInvocations'][0]['CommandPlugins'][0]['Output']
+            print(f"Command finished with status: {status}")
+            print("Output:\n", output)
+            return output
+    
+    def resolve_input_downloads(self, run_id, current_task_index, input_files):
+        download_commands = []
+
+        previous_tasks = self.manifest_data['Tasks'][:current_task_index]
+
+        for input_file in input_files:
+            found = False
+            for task in reversed(previous_tasks):  
+                task_folder = task['Name'].replace('.py', '')
+                s3_path = f"s3://{self.bucket_name}/{self.project_name}/outputs/{run_id}/{task_folder}/{input_file}"
+                cmd = f"aws s3 cp {s3_path} /tmp/orca/{input_file} || true"
+                download_commands.append(cmd)
+                found = True
+                break  
+
+            if not found:
+                print(f"[WARN] Input file '{input_file}' not found in earlier task outputs (will still attempt fetch).")
+
+        return download_commands
+
 
 
 def pull_creds():
@@ -99,5 +161,5 @@ if __name__ == "__main__":
     )
     
     runner = OrcaRunner(session, instance_id = "i-018d124ff372e4da0", bucket_name="orca-s3-1738617758188", project_name="weird")
-    runner.handle_manifest()
+    runner.handle_runtime()
 

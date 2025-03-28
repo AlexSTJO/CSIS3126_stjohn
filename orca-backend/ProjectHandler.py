@@ -19,6 +19,7 @@ class ProjectHandler():
             self.s3_client.put_object(Bucket=self.bucket_name, Key=f"{project_name}/")
             print(f"Created Project {project_name}")
             self.generate_empty_manifest(project_name)
+            self.generate_empty_dependencies(project_name)
             return project_name
 
         except botocore.exceptions.ClientError as e:
@@ -101,6 +102,13 @@ class ProjectHandler():
         manifest_file = json.dumps(manifest_data, indent=4).encode('utf-8')
         self.s3_client.put_object(Bucket=self.bucket_name, Key=manifest_key, Body=manifest_file)
         print("Empty manifest created.")
+
+    def generate_empty_dependencies(self,project_name):
+        manifest_key = f"{project_name}/dependencies.txt"
+
+        self.s3_client.put_object( Bucket=self.bucket_name,Key=manifest_key,Body=b'')
+        print(f" Created empty dependencies.txt at s3://{self.bucket_name}/{manifest_key}")
+        
     
     def read_manifest(self):
         response = self.s3_client.get_object(Bucket=self.bucket_name, Key=self.manifest_key)
@@ -158,22 +166,10 @@ if __name__ == "__main__":
         aws_secret_access_key=creds["secret_access_key"],
         region_name="us-east-2"
     )
-    object_name = "test3.py"
-    task_info = {
-        "Name": object_name,
-        "Order": None,
-        "Inputs": [],
-        "Outputs": [],
-        "Description": "test3.py"
-    }
-    with open("test2.py", "rb") as file:
-        file_content = file.read()
-
-    runner = ProjectHandler(session, "orca-s3-1738617758188", "weird", True)
     
-    #print(runner.delete_object("test.py"))
-    #print(runner.add_object(object_name, file_content, task_info))
-    print(runner.update_task_info(task_info))
+
+    runner = ProjectHandler(session, "orca-s3-1738617758188", "weird", True) 
+ 
 
     
 
