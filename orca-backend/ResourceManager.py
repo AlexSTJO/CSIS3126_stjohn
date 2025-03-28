@@ -2,6 +2,7 @@ import boto3
 import botocore.exceptions
 import csv
 import time
+import json
 
 class AWSResourceManager:
     def __init__(self, session, region_name):
@@ -162,7 +163,99 @@ class AWSResourceManager:
         except botocore.exceptions.ClientError as e:
             print(f"Error Creating Security Group: {e}")
 
+    def create_iam_role(self):
+        role_name='OrcaSSMRole'
+        try:
+            assume_role_policy = {
+                "Version": "2012-10-17",
+                "Statement": [{
+                    "Effect": "Allow",
+                    "Principal": {"Service": "ec2.amazonaws.com"},
+                    "Action": "sts:AssumeRole"
+                }]
+            }
+
+            response = self.iam_client.create_role(
+                RoleName=role_name,
+                AssumeRolePolicyDocument=json.dumps(assume_role_policy),
+                Description='Role for EC2 instance with SSM access',
+                Tags=[{'Key': 'Name', 'Value': 'orca-ec2-role'}]
+            )
+            print(response)
+            print(f"IAM Role Created: {role_name}")
+            return role_name
+        except self.iam_client.exceptions.EntityAlreadyExistsException:
+            print(f"IAM Role Already Exists: {role_name}")
+            return role_name
+    
+    def attach_ssm_policy_to_role(self ):
+        role_name='OrcaSSMRole'
+        self.iam_client.attach_role_policy(
+            RoleName=role_name,
+            PolicyArn='arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore'
+        )
+        print(f"Attached AmazonSSMManagedInstanceCore to {role_name}")
+
+    def create_instance_profile(self):
+        profile_name='OrcaInstanceProfile'
+        role_name='OrcaSSMRole'
+
+        try:
+            self.iam_client.create_instance_profile(InstanceProfileName=profile_name)
+        except self.iam_client.exceptions.EntityAlreadyExistsException:
+            pass  # Ignore if already created
+
+        # Attach the role to the instance profile
+        profile = self.iam_client.get_instance_profile(InstanceProfileName=profile_name)
+        attached_roles = [r['RoleName'] for r in profile['InstanceProfile']['Roles']]
+
+        if role_name not in attached_roles:
+            self.iam_client.add_role_to_instance_profile(
+                InstanceProfileName=profile_name,
+                RoleName=role_name
+            )
+            print(f"Attached role '{role_name}' to instance profile '{profile_name}'")
+        else:
+            print(f"Role '{role_name}' already attached to instance profile '{profile_name}'")
+
+        print(f"Instance Profile '{profile_name}' with Role '{role_name}' is ready")
+
+
+
+        return profile_name
+
+    def attach_s3_access_policy_to_role(self, bucket_name):
+        role_name = 'OrcaSSMRole'
+        s3_rw_policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Action": [
+                    "s3:GetObject",
+                    "s3:PutObject",
+                    "s3:ListBucket"
+                ],
+                "Resource": [
+                    f"arn:aws:s3:::{bucket_name}",
+                    f"arn:aws:s3:::{bucket_name}/*"
+                ]
+            }
+        ]
+        }
+
+        self.iam_client.put_role_policy(
+        RoleName=role_name,
+        PolicyName='OrcaS3ReadWriteAccess',
+        PolicyDocument=json.dumps(s3_rw_policy)
+    )
+
     def create_ec2_instance(self, existing_resources):
+        self.create_iam_role()
+        self.attach_ssm_policy_to_role()
+        self.attach_s3_access_policy_to_role(existing_resources["S3"])
+        self.create_instance_profile()
+        time.sleep(10)
         try:
             if not existing_resources['Ec2']:
                 ami_response = self.ssm_client.get_parameter(
@@ -176,6 +269,7 @@ class AWSResourceManager:
                     KeyName='orca-ec2-key',
                     SecurityGroupIds=[existing_resources['SecurityGroup']],
                     SubnetId=existing_resources['Subnet'],
+                    IamInstanceProfile={'Name': 'OrcaInstanceProfile'},
                     MinCount=1,
                     MaxCount=1,
                     TagSpecifications=[
@@ -189,6 +283,7 @@ class AWSResourceManager:
                 print(f"EC2 Instance Exists: {existing_resources['Ec2']}")
         except botocore.exceptions.ClientError as e:
             print(f"Error Creating EC2 Instance: {e}")
+
     def generate_unique_bucket_name(self):
         unique_suffix = str(int(time.time() * 1000))  
         return f"orca-s3-{unique_suffix}"
@@ -333,4 +428,9 @@ if __name__ == "__main__":
         existing_resources["S3"] = resource_manager.create_s3_bucket()
     else:
          print(f"S3 Bucket Exists: {existing_resources['S3']}")
-    resource_manager.create_ec2_instance(existing_resources)
+  
+    if not existing_resources['Ec2']:
+         resource_manager.create_ec2_instance(existing_resources) 
+    else:
+        print("Ec2 Exists")
+

@@ -114,20 +114,19 @@ export default {
   cursor: not-allowed;
 }
 .modal-btn.cancel {
-  background: #4b5563;
+  background: #006d5b;
 }
 .modal-btn:hover:not(:disabled) {
   transform: scale(1.05);
   transition: transform 0.2s ease, background-color 0.2s ease;
 }
 
-/* Specific hover colors for each button */
 .modal-btn.delete:hover:not(:disabled) {
   background: #c53030;
 }
 
 .modal-btn.cancel:hover {
-  background: #374151;
+  background: #004d40;
 }
 .spinner {
   display: inline-block;

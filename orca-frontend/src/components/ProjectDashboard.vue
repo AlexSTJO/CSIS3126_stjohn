@@ -342,7 +342,7 @@ export default {
 
       console.log("Updated task order:", this.tasks);
 
-      this.debouncedUpdate(); // Call the debounced function
+      this.debouncedUpdate(); 
     },
     async sendUpdateTaskOrder() {
       try {
@@ -418,24 +418,13 @@ export default {
     display: flex;
     flex-direction: column;
     gap: 10px;
-  }
-
-  .action-btn {
-    background: #334155;
-    color: white;
-    padding: 10px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: background 0.3s;
-  }
+  } 
 
   .action-btn:hover {
-    background: #475569;
+    background: #004d40;
   }
   .action-btn {
-    background: #334155;
+    background: #006d5b; 
     color: white;
     padding: 10px;
     border: none;
