@@ -73,7 +73,7 @@ class OrcaRunner:
 
         commands += [
             'source /tmp/venv/bin/activate',
-            'output=$(/tmp/venv/bin/python /tmp/orca/script.py 2>&1); exit_code=$?',
+            'cd /tmp/orca && output=$(/tmp/venv/bin/python script.py 2>&1); exit_code=$?',
             'log=$(jq -n --arg out "$output" --argjson code "$exit_code" '
             '\'{"stdout": $out, "stderr": "", "exit_code": $code}\')',
             'echo "$log" > /tmp/orca/log.json',
@@ -82,7 +82,6 @@ class OrcaRunner:
             f'for file in $(find /tmp/orca -type f ! -name "script.py" ! -name "log.json"); do '
             f'aws s3 cp "$file" {outputs_path}$(basename $file); done'
         ]
-
         response = self.ssm_client.send_command(
             InstanceIds=[self.instance_id],
             DocumentName='AWS-RunShellScript',

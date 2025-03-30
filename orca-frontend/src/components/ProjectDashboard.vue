@@ -80,6 +80,7 @@
         <!-- Fixed Actions -->
         <div class="sidebar-actions">
           <button class="action-btn" @click="addTask">Add Task</button>
+          <button class="action-btn" @click="editDependencies">Edit Dependencies</button>
           <button class="action-btn" @click="removeTask" :disabled="!selectedTask">Remove Task</button>
           <button class="action-btn" @click="runPipeline">Run Pipeline</button>
         </div>
@@ -141,6 +142,11 @@
     @close="showTaskDeletionModal = false"
     @confirm="handleTaskDelete"
   />
+  <DependenciesEditor
+    v-if="showDependenciesModal"
+    :project="project_info.Project"
+    @close="showDependenciesModal = false"
+  />
 </template>
 
 <script>
@@ -148,12 +154,14 @@ import { API_ENDPOINTS } from "./constants.js";
 import AddTaskModal from './AddTaskModal.vue';
 import TaskDeletionModal from './TaskDeletionModal.vue';
 import Draggable from "vuedraggable";
+import DependenciesEditor from "./DependenciesEditor.vue"
 import _ from "lodash";
 export default {
   components: {
     AddTaskModal,
     TaskDeletionModal,
-    Draggable
+    Draggable,
+    DependenciesEditor
   },
   data() {
     return {
@@ -164,6 +172,7 @@ export default {
       showAddTaskModal: false,
       showTaskDeletionModal: false,
       taskToDelete: null,
+      showDependenciesModal: false
     };
   },
   methods: {
@@ -364,7 +373,10 @@ export default {
       } catch (err) {
         console.error("Network error while updating task order:", err);
       }
-    } 
+    },
+    editDependencies() {
+      this.showDependenciesModal = true;
+    }
   },
   mounted() {
     this.checkLogin();

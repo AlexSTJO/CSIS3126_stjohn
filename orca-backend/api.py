@@ -438,9 +438,9 @@ def add_task():
         elif response == "Error Validating":
             return jsonify({"error": "Task Information Incorrect"}), 400
         else:
-            return jsonify({"error": "An Error Occured"}), 400
+            return jsonify({"error": "An Error Occurred"}), 400
     except:
-         return jsonify({"error": "An Error Occured"}), 400
+         return jsonify({"error": "An Error Occurred"}), 400
 
 @app.route('/remove-task', methods=['POST'])
 def remove_task():
@@ -467,9 +467,9 @@ def remove_task():
         elif response == "Ensure Order was configured again":
             return jsonify({"error": "Ensure Order Configurations"}), 400
         else:
-            return jsonify({"error": "An Error Occured"}), 400
+            return jsonify({"error": "An Error Occurred"}), 400
     except:
-        return jsonify({"error": "An Error Occured"}), 400
+        return jsonify({"error": "An Error Occurred"}), 400
 
 @app.route('/update-task-order', methods=['POST'])
 def update_task_order():
@@ -496,7 +496,65 @@ def update_task_order():
         else:
             return jsonify({"error": "Error updating task order"}), 400
     except:
-        return jsonify({"error": "An Error Occured"}), 400
-# ON OBJECT DELETE WE CAN CHANGE TASK ORDER TO LAST
+        return jsonify({"error": "An Error Occurred"}), 400
+
+@app.route('/get-dependencies', methods=['POST'])
+def get_dependencies():
+    token = request.headers.get('Authorization')
+    if not token:
+        return jsonify({"error": "Authorization Token Missing"}), 400
+    token = token.split(" ")[1] if "Bearer" in token else "token"
+    data = request.get_json()
+    project_info = data.get('project_info')
+    project_name = project_info["Project"]
+    if not project_name:
+        return jsonify({"error": "Missing project name"}), 400
+    try:
+        decoded_token = retrieve_token_info(token)
+        user_id = decoded_token.get("id")
+        session = create_session(user_id)
+        ec2_id, bucket_name = get_cloud_ids(user_id)            
+        project_handler = ProjectHandler(session,bucket_name,project_name, True)
+        response = project_handler.get_dependencies()
+        if response == "An Error Occurred":
+            return jsonify({"error": "An Error Occurred"})
+        else:
+            return jsonify({"message": response})
+
+    except:
+        return jsonify({"error": "An Error Occurred"})
+
+
+@app.route('/upload-dependencies', methods=['POST'])
+def upload_dependencies():
+    token = request.headers.get('Authorization')
+    if not token:
+        return jsonify({"error": "Authorization Token Missing"}), 400
+    token = token.split(" ")[1] if "Bearer" in token else "token"
+    data = request.get_json()
+    project_info = data.get('project_info')
+    project_name = project_info["Project"]
+    dependencies = data.get('dependencies')
+    if not project_name:
+        return jsonify({"error": "Missing project name"}), 400
+    try:
+        decoded_token = retrieve_token_info(token)
+        user_id = decoded_token.get("id")
+        session = create_session(user_id)
+        ec2_id, bucket_name = get_cloud_ids(user_id)            
+        project_handler = ProjectHandler(session, bucket_name, project_name, True)
+        print(dependencies)
+        response = project_handler.upload_dependencies(dependencies)
+        if not response:
+            return jsonify({"error": "An Error Occurred"})
+        else:
+            return jsonify({"message": "Dependencies Uploaded Successfully"})
+
+    except:
+        return jsonify({"error": "An Error Occurred"})
+
+
+
+
 if __name__ == '__main__':
     app.run(debug=True)

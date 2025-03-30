@@ -146,7 +146,35 @@ class ProjectHandler():
         self.manifest_data["Tasks"] = tasks
         if self.validate_and_submit_manifest():
             return "Success"
-        return "Error"    
+        return "Error"
+    
+    def get_dependencies(self):
+        try:
+            response = self.s3_client.get_object(Bucket=self.bucket_name, Key=f"{self.project_name}/dependencies.txt")
+            content = response["Body"].read().decode("utf-8")
+            dependencies = content.strip().splitlines()
+            return dependencies
+        except:
+            return "An Error Occurred"
+    
+    def upload_dependencies(self, dependencies_list):
+        if isinstance(dependencies_list, str):
+            dependencies_list = dependencies_list.strip().splitlines()
+             
+        content = "\n".join(dep.strip() for dep in dependencies_list if dep.strip())
+
+        try:
+            self.s3_client.put_object(
+                Bucket=self.bucket_name,
+                Key=f"{self.project_name}/dependencies.txt",
+                Body=content.encode("utf-8")
+            )
+            print(f"Uploaded dependencies.txt")
+            return True
+        except Exception as e:
+            print(f"Error uploading dependencies: {e}")
+            return False
+
     
                 
 def pull_creds():
