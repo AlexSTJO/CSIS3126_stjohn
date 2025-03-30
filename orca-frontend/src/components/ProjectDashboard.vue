@@ -294,7 +294,6 @@ export default {
           this.selectedTask = task;
           this.isEditing = true;
           console.log("Task added successfully");
-          await this.listTasks();
 
         } catch (err) {
           console.error("Network/Parsing error:", err);
@@ -337,7 +336,6 @@ export default {
 
         this.showTaskDeletionModal = false;
         console.log("Task deleted successfully");
-        await this.listTasks();
 
       } catch (err) {
         console.error("Error deleting task:", err);

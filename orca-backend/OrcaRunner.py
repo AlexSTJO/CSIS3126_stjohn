@@ -4,6 +4,7 @@ import csv
 import json
 import time
 from datetime import datetime
+
 class OrcaRunner:
     def __init__(self, session, bucket_name, instance_id, project_name):
         self.ec2_client = session.client('ec2')
@@ -35,16 +36,15 @@ class OrcaRunner:
 
     def bootstrap_instance(self):
         commands = [
-            'rm -rf /tmp/orca',                     
+            'rm -rf /tmp',
             'mkdir -p /tmp/orca',
             'yum install -y jq python3 python3-pip',
             'python3 -m venv /tmp/venv',
             f"aws s3 cp s3://{self.bucket_name}/{self.project_name}/dependencies.txt /tmp/orca/requirements.txt || true",
             '/tmp/venv/bin/pip install --upgrade pip',
             '/tmp/venv/bin/pip install -r /tmp/orca/requirements.txt || true',
-            'rm /tmp/orca/requirements.txt'
+            '/tmp/venv/bin/pip install "urllib3<2.0" "requests<3.0"'
         ]
-
         response = self.ssm_client.send_command(
             InstanceIds=[self.instance_id],
             DocumentName='AWS-RunShellScript',
@@ -79,7 +79,7 @@ class OrcaRunner:
             'echo "$log" > /tmp/orca/log.json',
             f"aws s3 cp /tmp/orca/log.json {log_path}",
 
-            f'for file in $(find /tmp/orca -type f ! -name "script.py" ! -name "log.json"); do '
+            f'for file in $(find /tmp/orca -type f ! -name "script.py" ! -name "log.json" ! -name "requirements.txt"); do '
             f'aws s3 cp "$file" {outputs_path}$(basename $file); done'
         ]
         response = self.ssm_client.send_command(
