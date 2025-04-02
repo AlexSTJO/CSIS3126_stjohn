@@ -606,7 +606,89 @@ def handle_run_pipeline(data):
         emit("log", f"[ERROR] {str(e)}")
 
 
+@app.route('/list-output-files', methods=['POST'])
+def list_output_files():
+    token = request.headers.get('Authorization')
+    if not token:
+        return jsonify({"error": "Authorization Token Missing"}), 400
 
+    token = token.split(" ")[1] if "Bearer" in token else token
+    data = request.get_json()
+
+    project_name = data.get("project_name")
+    run_id = data.get("run_id")
+
+    if not project_name or not run_id:
+        return jsonify({"error": "Missing project_name or run_id"}), 400
+
+    try:
+        decoded_token = retrieve_token_info(token)
+        user_id = decoded_token.get("id")
+        session = create_session(user_id)
+        _, bucket_name = get_cloud_ids(user_id)
+
+        prefix = f"{project_name}/outputs/{run_id}/"
+        s3 = session.client("s3")
+        response = s3.list_objects_v2(Bucket=bucket_name, Prefix=prefix)
+
+        files = []
+        for item in response.get("Contents", []):
+            key = item["Key"]
+            if key.endswith("/"):
+                continue
+            parts = key.split("/")
+            if len(parts) >= 5:
+                task = parts[4]
+                file_name = parts[-1]
+
+                presigned_url = s3.generate_presigned_url(
+                    "get_object",
+                    Params={"Bucket": bucket_name, "Key": key},
+                    ExpiresIn=3600
+                )
+
+                files.append({
+                    "task": task,
+                    "file": file_name,
+                    "s3_key": key,
+                    "url": presigned_url
+                })
+
+        return jsonify(files)
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/get-output-file', methods=['POST'])
+def get_output_file():
+    token = request.headers.get('Authorization')
+    if not token:
+        return jsonify({"error": "Authorization Token Missing"}), 400
+
+    token = token.split(" ")[1] if "Bearer" in token else token
+    data = request.get_json()
+
+    project_name = data.get("project_name")
+    s3_key = data.get("s3_key")
+
+    if not project_name or not s3_key:
+        return jsonify({"error": "Missing project_name or s3_key"}), 400
+
+    try:
+        decoded_token = retrieve_token_info(token)
+        user_id = decoded_token.get("id")
+        session = create_session(user_id)
+        _, bucket_name = get_cloud_ids(user_id)
+
+        s3 = session.client("s3")
+        obj = s3.get_object(Bucket=bucket_name, Key=s3_key)
+        content = obj["Body"].read().decode("utf-8")
+
+        return jsonify({"content": content})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == '__main__':
