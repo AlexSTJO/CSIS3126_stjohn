@@ -9,6 +9,8 @@ import ResourceAllocation from '../components/ResourceAllocation.vue'
 import LogoutPage from '../components/LogoutPage.vue'
 import DashboardPage from '../components/DashboardPage.vue'
 import ProjectDashboard from '../components/ProjectDashboard.vue'
+import PipelineLogs from '../components/PipelineLogs.vue'
+
 const routes = [
   { path: '/', component: HubPage },
   { path: '/login', component:LoginPage },
@@ -19,7 +21,8 @@ const routes = [
   { path: '/resource-allocation', component:ResourceAllocation},
   { path: '/logout', component:LogoutPage},
   { path: '/dashboard', component:DashboardPage},
-  { path: '/project/:projectname', component:ProjectDashboard}
+  { path: '/project/:projectname', component:ProjectDashboard},
+  { path: '/run-pipeline/:projectname', component: PipelineLogs}
 ];
 
 const router = createRouter({

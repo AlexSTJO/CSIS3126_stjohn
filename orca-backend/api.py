@@ -1,9 +1,14 @@
+import eventlet
+eventlet.monkey_patch()
+
+
 from flask import Flask, request, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 import mysql.connector
 import jwt
 import datetime
 from flask_cors import CORS
+from flask_socketio import SocketIO, emit
 from CloudHandler import get_db_credentials, get_encryption_key
 from Utils import encrypt_secret, decrypt_secret
 from dotenv import load_dotenv
@@ -13,9 +18,11 @@ from ResourceManager import AWSResourceManager
 import botocore.exceptions
 from InfoHandler import InfoHandler
 from ProjectHandler import ProjectHandler
+from OrcaRunner import OrcaRunner
 load_dotenv()
 app = Flask(__name__)
 CORS(app)
+socketio = SocketIO(app, cors_allowed_origins="*")
 
 SECRET_KEY = get_encryption_key(os.getenv('E_KEY_ID_JWT'))
     
@@ -573,8 +580,34 @@ def upload_dependencies():
     except:
         return jsonify({"error": "An Error Occurred"})
 
+@socketio.on("run_pipeline")
+def handle_run_pipeline(data):
+    token = data.get("token")
+    project_name = data.get("project")
+
+    if not token or not project_name:
+        emit("log", "[ERROR] Missing token or project name")
+        return
+
+    try:
+        decoded_token = retrieve_token_info(token)
+        user_id = decoded_token.get("id")
+        session = create_session(user_id)
+        instance_id, bucket_name = get_cloud_ids(user_id)
+
+        runner = OrcaRunner(session, bucket_name, instance_id, project_name)
+        emit("log", "[INFO] Starting pipeline...\n")
+
+        for chunk in runner.stream_pipeline():
+            emit("log", chunk)
+
+        emit("log", "[SUCCESS] Pipeline complete.")
+    except Exception as e:
+        emit("log", f"[ERROR] {str(e)}")
+
+
 
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    socketio.run(app, host='0.0.0.0', port=5000)

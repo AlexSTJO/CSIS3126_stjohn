@@ -4,14 +4,15 @@
       <h2>Create New Project</h2>
       <input v-model="projectName" class="project-input" placeholder="Enter project name" />
       <div class="modal-actions">
-        <button @click="create">Create</button>
-        <button @click="$emit('close')">Cancel</button>
+        <button class="modal-btn" @click="create">Create</button>
+        <button class="modal-btn cancel" @click="$emit('close')">Cancel</button>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import { API_ENDPOINTS } from "./constants.js";
 export default {
   data() {
     return {
@@ -22,7 +23,7 @@ export default {
     async create() {
       if (!this.projectName.trim()) return alert("Please enter a project name.");
       try {
-        const response = await fetch("/create-project", {
+        const response = await fetch(`${API_ENDPOINTS.CREATE_PROJECT}`, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${sessionStorage.getItem("token")}`,
@@ -37,7 +38,7 @@ export default {
           return;
         }
 
-        this.$emit("created", result); // send project name back to parent
+        this.$emit("created", result); 
         this.$emit("close");
       } catch (err) {
         console.error("Error creating project:", err);
@@ -72,18 +73,28 @@ export default {
 }
 .modal-actions {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
+  margin-top: 15px; 
+  gap: 40px;
 }
-.modal-actions button {
-  padding: 8px 20px;
+.modal-btn {
+  padding: 10px 20px;
   background: #006d5b;
+  width: 100%;
   border: none;
-  color: white;
   border-radius: 6px;
+  color: white;
   cursor: pointer;
 }
-.modal-actions button:hover {
-  background: #004d40;
+.modal-btn.cancel {
+  background: #e53e3e;
+}
+
+.modal-btn:hover {
+ background: #004d40; 
+}
+.modal-btn.cancel:hover {
+  background: #c53030;
 }
 </style>
 

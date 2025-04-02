@@ -374,6 +374,9 @@ export default {
     },
     editDependencies() {
       this.showDependenciesModal = true;
+    },
+    runPipeline() {
+      this.$router.push(`/run-pipeline/${this.project_info.Project}`);
     }
   },
   mounted() {

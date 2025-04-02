@@ -5,6 +5,7 @@ import json
 import time
 from datetime import datetime
 
+
 class OrcaRunner:
     def __init__(self, session, bucket_name, instance_id, project_name):
         self.ec2_client = session.client('ec2')
@@ -17,22 +18,34 @@ class OrcaRunner:
         
 
     def read_manifest(self):
-        response = self.s3_client.get_object(Bucket=self.bucket_name, Key=f"{self.project_name}/execution-manifest.json")
-        manifest_content = response["Body"].read().decode("utf-8")
-        manifest_data = json.loads(manifest_content)
-        return manifest_data
+        try:
+            response = self.s3_client.get_object(
+                Bucket=self.bucket_name,
+                Key=f"{self.project_name}/execution-manifest.json"
+            )
+            manifest_content = response["Body"].read().decode("utf-8")
+            return json.loads(manifest_content)
+        except botocore.exceptions.ClientError as e:
+            print(f"[ERROR] Failed to read manifest: {e}")
+            raise
 
-
-    def handle_runtime(self):
+    def stream_pipeline(self):
         run_id = datetime.utcnow().strftime("%Y%m%d-%H%M%S")
-        print(f"[PIPELINE] Run ID: {run_id}")
+        yield f"[PIPELINE] Run ID: {run_id}\n"
 
-        ordered_tasks = sorted(self.manifest_data['Tasks'], key=lambda task: task['Order']) 
-        self.bootstrap_instance()
+        ordered_tasks = sorted(self.manifest_data['Tasks'], key=lambda task: task['Order'])
+
+        yield "[PIPELINE] Bootstrapping instance...\n"
+        bootstrap_command_id = self.bootstrap_instance()
+        for output in self.stream_command_output(bootstrap_command_id):
+            yield f"[BOOTSTRAP] {output}"
 
         for index, task in enumerate(ordered_tasks):
-            self.invoke_script(task, run_id=run_id, task_index=index)
+            yield f"\n[TASK {index + 1}] Starting {task['Name']}...\n"
+            command_id = self.invoke_script(task, run_id=run_id, task_index=index, return_only_command_id=True)
 
+            for chunk in self.stream_command_output(command_id):
+                yield chunk
 
     def bootstrap_instance(self):
         commands = [
@@ -53,11 +66,9 @@ class OrcaRunner:
 
         command_id = response['Command']['CommandId']
         print(f"[BOOTSTRAP] Command sent. ID: {command_id}")
+        return command_id
 
-        return self._wait_for_command(command_id)
-   
-
-    def invoke_script(self, task, run_id, task_index):
+    def invoke_script(self, task, run_id, task_index, return_only_command_id=False):
         file_name = task["Name"]
         inputs = task.get("Inputs", [])
         script_base = file_name.replace('.py', '')
@@ -65,12 +76,10 @@ class OrcaRunner:
         log_path = f"s3://{self.bucket_name}/{self.project_name}/logs/{run_id}/log-{file_name}.json"
         script_path = f"s3://{self.bucket_name}/{self.project_name}/{file_name}"
 
-        commands = []
-
-        commands.append(f"aws s3 cp {script_path} /tmp/orca/script.py")
-
+        commands = [
+            f"aws s3 cp {script_path} /tmp/orca/script.py"
+        ]
         commands += self.resolve_input_downloads(run_id, task_index, inputs)
-
         commands += [
             'source /tmp/venv/bin/activate',
             'cd /tmp/orca && output=$(/tmp/venv/bin/python script.py 2>&1); exit_code=$?',
@@ -82,6 +91,7 @@ class OrcaRunner:
             f'for file in $(find /tmp/orca -type f ! -name "script.py" ! -name "log.json" ! -name "requirements.txt"); do '
             f'aws s3 cp "$file" {outputs_path}$(basename $file); done'
         ]
+
         response = self.ssm_client.send_command(
             InstanceIds=[self.instance_id],
             DocumentName='AWS-RunShellScript',
@@ -91,10 +101,40 @@ class OrcaRunner:
         command_id = response['Command']['CommandId']
         print(f"[SCRIPT] Command sent. ID: {command_id} for task: {file_name}")
 
-        return self._wait_for_command(command_id)
+        if return_only_command_id:
+            return command_id
+        else:
+            return self._wait_for_command(command_id)
+
+    def stream_command_output(self, command_id):
+        seen_output = ""
+        while True:
+            result = self.ssm_client.list_command_invocations(
+                CommandId=command_id,
+                InstanceId=self.instance_id,
+                Details=True
+            )
+
+            if not result['CommandInvocations']:
+                time.sleep(1)
+                continue
+
+            invocation = result['CommandInvocations'][0]
+            status = invocation['Status']
+            output = invocation['CommandPlugins'][0].get('Output', '')
+
+            if output != seen_output:
+                new_chunk = output[len(seen_output):]
+                seen_output = output
+                yield new_chunk
+
+            if status in ['Success', 'Cancelled', 'Failed', 'TimedOut']:
+                yield f"\n[STATUS] {status}\n"
+                break
+
+            time.sleep(2)
 
     def _wait_for_command(self, command_id):
-    
         time.sleep(2)
         while True:
             result = self.ssm_client.list_command_invocations(
@@ -104,21 +144,18 @@ class OrcaRunner:
             )
 
             if not result['CommandInvocations']:
-                print("No output yet, waiting...")
                 time.sleep(2)
                 continue
 
             status = result['CommandInvocations'][0]['Status']
+            output = result['CommandInvocations'][0]['CommandPlugins'][0]['Output']
+
             if status in ['Pending', 'InProgress']:
-                print(f"Command running... Status: {status}")
                 time.sleep(2)
                 continue
 
-            output = result['CommandInvocations'][0]['CommandPlugins'][0]['Output']
-            print(f"Command finished with status: {status}")
-            print("Output:\n", output)
             return output
-    
+
     def resolve_input_downloads(self, run_id, current_task_index, input_files):
         download_commands = []
 
@@ -138,6 +175,7 @@ class OrcaRunner:
                 print(f"[WARN] Input file '{input_file}' not found in earlier task outputs (will still attempt fetch).")
 
         return download_commands
+
 
 
 
