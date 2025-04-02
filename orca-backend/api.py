@@ -354,6 +354,26 @@ def list_projects():
     except:
         return({"error": "An Error Occured"}), 400
 
+@app.route('/create-project', methods=['POST'])
+def create_project():
+    token = request.headers.get('Authorization')
+    if not token:
+        return jsonify({"error": "Authorization Token Missing"}), 400
+    token = token.split(" ")[1] if "Bearer" in token else "token"    
+    data = request.get_json()
+    project_name = data.get('project_name')
+    try:
+        decoded_token = retrieve_token_info(token)
+        user_id = decoded_token.get("id")
+        session = create_session(user_id)
+        ec2_id, bucket_name = get_cloud_ids(user_id)
+        project_handler = ProjectHandler(session, bucket_name, project_name, False)  
+        return jsonify(project_handler.project_name), 200
+    except:
+        return({"error": "An Error Occured"}), 400
+
+
+
 @app.route('/get-project-tasks/', methods=['GET'])
 def get_project_tasks():
     token = request.headers.get('Authorization')

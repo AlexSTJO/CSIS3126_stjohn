@@ -55,16 +55,27 @@
             </router-link>         
           </li>
         </ul>
+        <button class="create-btn" @click="showCreateModal = true">+ New Project</button>
       </aside>
     </div>
   </div>
+  <CreateProjectModal
+  v-if="showCreateModal"
+  @close="showCreateModal = false"
+  @created="handleProjectCreated"
+  />
 </template>
 <script>
 import { API_ENDPOINTS } from  "./constants.js";
+import CreateProjectModal from "./CreateProjectModal.vue";
   export default {
+    components: {
+      CreateProjectModal,
+    },
     data() {
       return {
-        projectList: []
+        projectList: [],
+        showCreateModal: false
       }
     },
     methods: {
@@ -92,7 +103,12 @@ import { API_ENDPOINTS } from  "./constants.js";
         } catch (error){
           console.error("Error Listing Projects", error);
         }
+      },
+      handleProjectCreated(newProjectName) {
+        this.projectList.push(newProjectName);
+        this.$router.push(`/project/${newProjectName}`);
       }
+    
     },
     mounted() {
       this.checkLogin();
@@ -158,6 +174,21 @@ import { API_ENDPOINTS } from  "./constants.js";
 
 .project-item:active {
   background: #3a4553; 
+}
+
+.create-btn {
+  width: 100%;
+  margin-bottom: 15px;
+  background: #006d5b;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+.create-btn:hover {
+  background: #004d40;
 }
 
 
