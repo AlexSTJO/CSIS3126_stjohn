@@ -74,15 +74,44 @@
       </div>
     </div>     
   </div>
+  <div v-if="pipelineComplete" class="output-explorer">
+    <h3 class="explorer-title">Output Explorer</h3>
+
+    <div v-for="(taskGroup, taskName) in groupedFiles" :key="taskName" class="task-group">
+      <h4 class="task-name">{{ taskName }}</h4>
+      <ul>
+        <li v-for="file in taskGroup" :key="file.s3_key" class="file-entry">
+          <button class="preview-btn" @click="previewFile(file)">
+            📄 {{ file.file }}
+          </button>
+          <button @click="downloadFile(file)" class="download-icon-btn" title="Download">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon-download" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+          </button>       
+        </li>
+      </ul>
+    </div>
+
+    <div v-if="previewContent" class="file-preview">
+      <h4>Preview</h4>
+      <pre class="preview-text">{{ previewContent }}</pre>
+    </div>
+  </div>
 </template>
 
 <script setup>
-import { ref, onBeforeUnmount, onMounted, nextTick } from 'vue'
+import { ref, computed, onBeforeUnmount, onMounted, nextTick } from 'vue'
 import { io } from 'socket.io-client'
 import { useRoute } from 'vue-router'
-
+import { API_ENDPOINTS } from './constants.js'
 const logs = ref([])
 const isRunning = ref(false)
+const previewContent = ref('')
+const pipelineComplete = ref(false)
+const outputFiles = ref([])
 const logBox = ref(null)
 
 const route = useRoute()
@@ -94,8 +123,10 @@ let socket = null
 const runPipeline = () => {
   logs.value = []
   isRunning.value = true
+  previewContent.value = ''
+  pipelineComplete.value = false
 
-  socket = io('http://localhost:5000', {
+  socket = io(`${API_ENDPOINTS.BASE_URL}`, {
     transports: ['websocket']
   })
 
@@ -114,6 +145,10 @@ const runPipeline = () => {
         logBox.value.scrollTop = logBox.value.scrollHeight
       }
     })
+    if (message.includes('[SUCCESS')) {
+      pipelineComplete.value = true
+      fetchOutputs()
+    }
   })
 
   socket.on('disconnect', () => {
@@ -127,8 +162,59 @@ const runPipeline = () => {
   })
 }
 
+const fetchOutputs = async () => {
+  try {
+    console.log('Calling:', getRunIdFromLogs())
+    const response = await fetch(`${API_ENDPOINTS.LIST_OUTPUT_FILES}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ project_name: projectName, run_id: getRunIdFromLogs() })
+    })
+    const data = await response.json()
+    console.log(data)
+    outputFiles.value = data
+  } catch (err) {
+    logs.value.push(`[ERROR ${timestamp()}] Failed to fetch output files.`)
+  }
+}
+
+const groupedFiles = computed(() => {
+  const grouped = {}
+  for (const file of outputFiles.value) {
+    const match = file.s3_key.match(/outputs\/[^/]+\/([^/]+)\//)
+    const taskName = match ? match[1] : 'Unknown Task'
+    if (!grouped[taskName]) grouped[taskName] = []
+    grouped[taskName].push(file)
+  }
+  return Object.keys(grouped).sort().reduce((acc, key) => {
+    acc[key] = grouped[key]
+    return acc
+  }, {})
+})
+
+
+const previewFile = async (file) => {
+  try {
+    const response = await fetch(`${API_ENDPOINTS.GET_OUTPUT_FILE}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ project_name: projectName, s3_key: file.s3_key })
+    })
+    const result = await response.json()
+    previewContent.value = result.content || '[No preview available]'
+  } catch (err) {
+    previewContent.value = '[Error loading file preview]'
+  }
+}
+
 const formatLog = (line) => {
-  const level = line.match(/^\[(INFO|ERROR|SUCCESS)\]/)
+  const level = line.match(/\[(INFO|ERROR|SUCCESS)\]/)
   const ts = timestamp()
   return level ? `[${level[1]} ${ts}] ${line.replace(level[0], '').trim()}` : `[LOG ${ts}] ${line}`
 }
@@ -148,6 +234,44 @@ const timestamp = () => {
   return now.toLocaleTimeString()
 }
 
+const getRunIdFromLogs = () => {
+  const line = logs.value.find(l => l.includes('[PIPELINE] Run ID'))
+  const match = line?.match(/Run ID:\s*(\S+)/)
+  return match ? match[1] : ''
+}
+
+const downloadFile = async (file) => {
+  try {
+    const response = await fetch(`${API_ENDPOINTS.DOWNLOAD_FILE}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        project_name: projectName,
+        s3_key: file.s3_key
+      })
+    });
+
+    if (!response.ok) throw new Error('Download failed');
+
+    const blob = await response.blob();
+    const blobUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = file.file;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(blobUrl);
+  } catch (err) {
+    console.error('Download failed:', err);
+  }
+};
+
+
+
 onMounted(() => {
   runPipeline()
 })
@@ -155,8 +279,6 @@ onMounted(() => {
 onBeforeUnmount(() => {
   if (socket) socket.disconnect()
 })
-
-
 </script>
 
 <style scoped>
@@ -188,47 +310,131 @@ onBeforeUnmount(() => {
 }
 
 .log-info {
-  color: #60a5fa; 
+  color: #60a5fa;
 }
-
 .log-default {
   color: #e5e7eb;
 }
-
 .log-success {
-  color: #34d399; 
+  color: #34d399;
   font-weight: bold;
 }
-
 .log-error {
-  color: #f87171; 
+  color: #f87171;
   font-weight: bold;
 }
-
 .log-task {
-  color: #fbbf24; 
+  color: #fbbf24;
   font-style: italic;
   font-weight: bold;
 }
-.run-btn {
-  margin-top: 15px;
-  padding: 10px 20px;
-  background: #006d5b;
-  color: white;
-  border: none;
-  border-radius: 6px;
+
+.output-explorer {
+  margin: 30px 20px 40px;
+  background: #111827;
+  border: 1px solid #374151;
+  padding: 20px;
+  border-radius: 10px;
+}
+
+.explorer-title {
+  font-size: 1.4rem;
+  margin-bottom: 15px;
   font-weight: bold;
-  cursor: pointer;
+  color: #f9fafb;
+  border-bottom: 1px solid #374151;
+  padding-bottom: 5px;
+}
+
+.task-group {
+  background: #1f2937;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border: 1px solid #374151;
+}
+
+.task-name {
+  color: #fbbf24;
+  margin-bottom: 10px;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.file-entry {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #111827;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-bottom: 6px;
+  border: 1px solid #374151;
   transition: background 0.3s;
 }
 
-.run-btn:hover {
-  background: #004d40;
+.file-entry:hover {
+  background: #1e293b;
 }
 
-.run-btn:disabled {
-  background: #4b5563;
-  cursor: not-allowed;
+.preview-btn {
+  background: none;
+  border: none;
+  color: #60a5fa;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: color 0.2s;
+}
+
+.preview-btn:hover {
+  color: #3b82f6;
+  text-decoration: underline;
+}
+
+.download-icon-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  margin-left: 8px;
+  transition: transform 0.2s ease;
+  color: #34d399;
+}
+
+.download-icon-btn:hover {
+  transform: scale(1.15);
+  color: #10b981;
+}
+
+.icon-download {
+  stroke: currentColor;
+  vertical-align: middle;
+}
+.file-preview {
+  background: #1e293b;
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid #374151;
+  color: #e5e7eb;
+  margin-top: 20px;
+  font-family: 'Courier New', monospace;
+  white-space: pre-wrap;
+  font-size: 0.9rem;
+}
+
+.file-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.file-icon {
+  font-size: 1.1rem;
+}
+
+.preview-text {
+  text-align: left;
 }
 </style>
 

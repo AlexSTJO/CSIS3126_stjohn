@@ -2,7 +2,7 @@ import eventlet
 eventlet.monkey_patch()
 
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 from werkzeug.security import generate_password_hash, check_password_hash
 import mysql.connector
 import jwt
@@ -13,6 +13,7 @@ from CloudHandler import get_db_credentials, get_encryption_key
 from Utils import encrypt_secret, decrypt_secret
 from dotenv import load_dotenv
 import os
+import io
 import boto3
 from ResourceManager import AWSResourceManager
 import botocore.exceptions
@@ -608,6 +609,7 @@ def handle_run_pipeline(data):
 
 @app.route('/list-output-files', methods=['POST'])
 def list_output_files():
+    print("[DEBUG] /list-output-files hit")
     token = request.headers.get('Authorization')
     if not token:
         return jsonify({"error": "Authorization Token Missing"}), 400
@@ -690,6 +692,42 @@ def get_output_file():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/download-file', methods=['POST', 'OPTIONS'])
+def download_file():
+    if request.method == 'OPTIONS':
+        return '', 204
+
+    try:
+        token = request.headers.get('Authorization')
+        if not token:
+            return jsonify({"error": "Missing token"}), 400
+
+        token = token.split(" ")[1] if "Bearer" in token else token
+        data = request.get_json()
+
+        project_name = data.get("project_name")
+        s3_key = data.get("s3_key")
+
+        print(f"[DEBUG] Token: {token}")
+        print(f"[DEBUG] Project: {project_name}, S3 Key: {s3_key}")
+
+        decoded_token = retrieve_token_info(token)
+        user_id = decoded_token.get("id")
+        session = create_session(user_id)
+        _, bucket_name = get_cloud_ids(user_id)
+
+        s3 = session.client("s3")
+        response = s3.get_object(Bucket=bucket_name, Key=s3_key)
+        file_data = response["Body"].read()
+
+        return send_file(
+            io.BytesIO(file_data),
+            download_name=s3_key.split("/")[-1],
+            as_attachment=True
+        )
+    except Exception as e:
+        print("[ERROR]", str(e))  
+        return jsonify({"error": "Download failed", "details": str(e)}), 500
 
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=5000)

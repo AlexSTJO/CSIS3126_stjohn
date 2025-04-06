@@ -17,5 +17,9 @@ export const API_ENDPOINTS = {
   UPDATE_TASK_ORDER: `${BASE_URL}/update-task-order`,
   GET_DEPENDENCIES: `${BASE_URL}/get-dependencies`,
   UPLOAD_DEPENDENCIES: `${BASE_URL}/upload-dependencies`,
-  CREATE_PROJECT: `${BASE_URL}/create-project`
+  CREATE_PROJECT: `${BASE_URL}/create-project`,
+  GET_OUTPUT_FILE: `${BASE_URL}/get-output-file`,
+  LIST_OUTPUT_FILES: `${BASE_URL}/list-output-files`,
+  DOWNLOAD_FILE: `${BASE_URL}/download-file`,
+  BASE_URL: `${BASE_URL}`
 }
