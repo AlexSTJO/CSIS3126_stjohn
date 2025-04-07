@@ -226,6 +226,7 @@ const getLogClass = (line) => {
   if (line.includes('[INFO')) return 'log-info'
   if (line.includes('[TASK')) return 'log-task'
   if (line.includes('[LOG')) return 'log-default'
+  if (line.includes('[SCRIPT')) return 'log-output' 
   return 'log-default'
 }
 
@@ -327,6 +328,17 @@ onBeforeUnmount(() => {
   color: #fbbf24;
   font-style: italic;
   font-weight: bold;
+}
+
+.log-output {
+  color: #c4b5fd; 
+  font-style: italic;
+}
+
+.log-script-error {
+  color: #fb7185; 
+  font-weight: bold;
+  font-style: italic;
 }
 
 .output-explorer {

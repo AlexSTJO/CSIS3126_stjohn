@@ -82,16 +82,22 @@ class OrcaRunner:
         commands += self.resolve_input_downloads(run_id, task_index, inputs)
         commands += [
             'source /tmp/venv/bin/activate',
-            'cd /tmp/orca && output=$(/tmp/venv/bin/python script.py 2>&1); exit_code=$?',
-            'log=$(jq -n --arg out "$output" --argjson code "$exit_code" '
-            '\'{"stdout": $out, "stderr": "", "exit_code": $code}\')',
-            'echo "$log" > /tmp/orca/log.json',
-            f"aws s3 cp /tmp/orca/log.json {log_path}",
-
-            f'for file in $(find /tmp/orca -type f ! -name "script.py" ! -name "log.json" ! -name "requirements.txt"); do '
+            'cd /tmp/orca',
+            '/tmp/venv/bin/python script.py > out.txt 2> err.txt; EXIT_CODE=$?',
+            'if [ -f out.txt ]; then echo "[SCRIPT] Script Output"; cat out.txt; fi',
+            'if [ -f err.txt ]; then echo "[SCRIPT] Script Errors"; cat err.txt; fi',
+            'echo "[LOG] Output complete"', 
+            'python3 -c \'import os, json; '
+            'f = open("/tmp/orca/log.json", "w"); '
+            'json.dump({'
+            '"stdout": open("out.txt").read(), '
+            '"stderr": open("err.txt").read(), '
+            '"exit_code": int(os.environ.get("EXIT_CODE", "1"))'
+            '}, f)\'',
+            f'aws s3 cp /tmp/orca/log.json {log_path}',
+            f'for file in $(find /tmp/orca -type f ! -name "log.json" ! -name "script.py" ! -name "requirements.txt" ! -name "err.txt" ! -name "out.txt"); do '
             f'aws s3 cp "$file" {outputs_path}$(basename $file); done'
         ]
-
         response = self.ssm_client.send_command(
             InstanceIds=[self.instance_id],
             DocumentName='AWS-RunShellScript',
