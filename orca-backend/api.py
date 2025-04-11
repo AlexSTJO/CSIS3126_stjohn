@@ -27,7 +27,6 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 
 SECRET_KEY = get_encryption_key(os.getenv('E_KEY_ID_JWT'))
     
-# Database connection
 def connect_to_db():
     if os.getenv("DB_HOST") != "localhost":
         creds = get_db_credentials()

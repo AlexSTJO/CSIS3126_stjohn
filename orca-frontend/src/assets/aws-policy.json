@@ -43,7 +43,8 @@
 				"ssm:GetParameter",
 				"ssm:SendCommand",
 				"ssm:GetCommandInvocation",
-				"ssm:DescribeInstanceInformation"
+				"ssm:DescribeInstanceInformation",
+				"ssm:ListCommandInvocations"
 			],
 			"Resource": "*"
 		},
@@ -53,18 +54,35 @@
 				"s3:ListAllMyBuckets",
 				"s3:CreateBucket",
 				"s3:PutObject",
-        "s3:ListBucket"
+				"s3:ListBucket",
+				"s3:GetObject",
+				"s3:DeleteObject"
 			],
 			"Resource": "*"
 		},
 		{
 			"Effect": "Allow",
 			"Action": [
+				"iam:CreateRole",
+				"iam:AttachRolePolicy",
+				"iam:CreateInstanceProfile",
+				"iam:AddRoleToInstanceProfile",
+				"iam:GetRole",
+				"iam:GetInstanceProfile",
+				"iam:ListRoles",
 				"iam:GetUser",
+				"iam:ListInstanceProfiles",
 				"iam:ListAttachedUserPolicies",
 				"iam:GetPolicy",
-				"iam:GetPolicyVersion"
+				"iam:GetPolicyVersion",
+				"iam:TagRole",
+				"iam:PutRolePolicy"
 			],
+			"Resource": "*"
+		},
+		{
+			"Effect": "Allow",
+			"Action": "iam:PassRole",
 			"Resource": "*"
 		}
 	]

@@ -352,18 +352,7 @@ class AWSResourceManager:
             return []
 
     def check_required_policies(self):
-        required_actions = [
-            "ec2:DescribeInstances", "ec2:CreateVpc", "ec2:ModifyVpcAttribute", "ec2:DescribeVpcs",
-            "ec2:CreateSubnet", "ec2:DescribeSubnets", "ec2:ModifySubnetAttribute", "ec2:CreateInternetGateway",
-            "ec2:DescribeInternetGateways", "ec2:AttachInternetGateway", "ec2:CreateRouteTable", "ec2:DescribeRouteTables",
-            "ec2:CreateRoute", "ec2:AssociateRouteTable", "ec2:DescribeAvailabilityZones", "ec2:CreateTags",
-            "ec2:CreateKeyPair", "ec2:CreateSecurityGroup", "ec2:DeleteSecurityGroup", "ec2:DescribeSecurityGroups",
-            "ec2:AuthorizeSecurityGroupIngress", "ec2:RunInstances", "ec2:TerminateInstances", "ec2:StartInstances",
-            "ec2:StopInstances", "ec2:DescribeInstanceStatus", "ec2:DescribeImages", "ec2:DescribeKeyPairs",
-            "ec2:AllocateAddress", "ec2:AssociateAddress", "ssm:GetParameter", "ssm:SendCommand",
-            "ssm:GetCommandInvocation", "ssm:DescribeInstanceInformation", "s3:ListAllMyBuckets", "s3:CreateBucket",
-            "s3:PutObject","s3:ListBucket", "iam:GetUser", "iam:GetPolicy", "iam:GetPolicyVersion"
-        ]
+        required_actions = [ "ec2:DescribeInstances","ec2:CreateVpc","ec2:ModifyVpcAttribute","ec2:DescribeVpcs","ec2:CreateSubnet","ec2:DescribeSubnets","ec2:ModifySubnetAttribute","ec2:CreateInternetGateway","ec2:DescribeInternetGateways","ec2:AttachInternetGateway","ec2:CreateRouteTable","ec2:DescribeRouteTables","ec2:CreateRoute","ec2:AssociateRouteTable","ec2:DescribeAvailabilityZones","ec2:CreateTags","ec2:CreateKeyPair","ec2:CreateSecurityGroup","ec2:DeleteSecurityGroup","ec2:DescribeSecurityGroups","ec2:AuthorizeSecurityGroupIngress","ec2:RunInstances","ec2:TerminateInstances","ec2:StartInstances","ec2:StopInstances","ec2:DescribeInstanceStatus","ec2:DescribeImages","ec2:DescribeKeyPairs","ec2:AllocateAddress","ec2:AssociateAddress","ssm:GetParameter","ssm:SendCommand","ssm:GetCommandInvocation","ssm:DescribeInstanceInformation","ssm:ListCommandInvocations","s3:ListAllMyBuckets","s3:CreateBucket","s3:PutObject","s3:ListBucket","s3:GetObject","s3:DeleteObject","iam:CreateRole","iam:AttachRolePolicy","iam:CreateInstanceProfile","iam:AddRoleToInstanceProfile","iam:GetRole","iam:GetInstanceProfile","iam:ListRoles","iam:GetUser","iam:ListInstanceProfiles","iam:ListAttachedUserPolicies","iam:GetPolicy","iam:GetPolicyVersion","iam:TagRole","iam:PutRolePolicy","iam:PassRole" ]
 
         attached_policies = self.check_attached_policies()
         user_permissions = set()
@@ -392,45 +381,7 @@ class AWSResourceManager:
         except botocore.exceptions.ClientError as e:
             print(f"Error fetching user name: {e}")
             return None
-def pull_creds():
-    with open('../secrets.csv', newline='', encoding='utf-8-sig') as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            creds = {'access_key': row['Access key ID'],
-                     'secret_access_key': row['Secret access key']}
 
-    return creds
 
-if __name__ == "__main__":
-    creds = pull_creds()
-    session = boto3.Session(
-        aws_access_key_id=creds["access_key"],
-        aws_secret_access_key=creds["secret_access_key"],
-        region_name="us-east-2"
-    )
 
-    resource_manager = AWSResourceManager(session, "us-east-2")
-    resource_manager.check_required_policies()
-
-    existing_resources = resource_manager.resource_existence()
-    existing_resources = resource_manager.create_and_configure_vpc(existing_resources)
-
-    if not existing_resources['KeyPair']:
-        resource_manager.create_key_pair()
-    else:
-        print(f"Key Pair Exists: {existing_resources['KeyPair']}")
-
-    if not existing_resources['SecurityGroup']:
-        existing_resources['SecurityGroup'] = resource_manager.create_security_group(existing_resources['Vpc'])
-    else:
-        print(f"Security Group Exists: {existing_resources['SecurityGroup']}")
-    if not existing_resources['S3']:
-        existing_resources["S3"] = resource_manager.create_s3_bucket()
-    else:
-         print(f"S3 Bucket Exists: {existing_resources['S3']}")
-  
-    if not existing_resources['Ec2']:
-         resource_manager.create_ec2_instance(existing_resources) 
-    else:
-        print("Ec2 Exists")
 
