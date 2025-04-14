@@ -75,6 +75,9 @@
         this.isLoggedIn = !!token;  
         const linkStatus = sessionStorage.getItem("link_status");
         this.isLinked = linkStatus === "true";
+        if (this.isLoggedIn && this.isLinked) {
+          this.navigate('dashboard')
+        }
       },
     },
       mounted() {

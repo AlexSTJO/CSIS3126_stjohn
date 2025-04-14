@@ -76,7 +76,6 @@
   </div>
   <div v-if="pipelineComplete" class="output-explorer">
     <h3 class="explorer-title">Output Explorer</h3>
-
     <div v-for="(taskGroup, taskName) in groupedFiles" :key="taskName" class="task-group">
       <h4 class="task-name">{{ taskName }}</h4>
       <ul>
@@ -105,7 +104,7 @@
 <script setup>
 import { ref, computed, onBeforeUnmount, onMounted, nextTick } from 'vue'
 import { io } from 'socket.io-client'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter} from 'vue-router'
 import { API_ENDPOINTS } from './constants.js'
 const logs = ref([])
 const isRunning = ref(false)
@@ -114,11 +113,18 @@ const pipelineComplete = ref(false)
 const outputFiles = ref([])
 const logBox = ref(null)
 
+
+const router = useRouter()
+const navigate = (path) => {
+  router.push(`/${path}`) 
+}
 const route = useRoute()
+
 const projectName = route.params.projectname
 const token = sessionStorage.getItem('token')
 
 let socket = null
+
 
 const runPipeline = () => {
   logs.value = []
@@ -212,6 +218,7 @@ const previewFile = async (file) => {
     previewContent.value = '[Error loading file preview]'
   }
 }
+
 
 const formatLog = (line) => {
   const level = line.match(/\[(INFO|ERROR|SUCCESS)\]/)
