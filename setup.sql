@@ -1,0 +1,30 @@
+CREATE DATABASE IF NOT EXISTS orca;
+USE orca;
+
+-- Users table
+CREATE TABLE IF NOT EXISTS users (
+    UserID INT AUTO_INCREMENT PRIMARY KEY,
+    Email VARCHAR(255) UNIQUE NOT NULL,
+    PasswordEncrypted VARCHAR(255) NOT NULL,
+    EncryptionKeyID VARCHAR(255)
+);
+
+-- Cloud credentials table
+CREATE TABLE IF NOT EXISTS cloud_credentials (
+    CredentialID INT AUTO_INCREMENT PRIMARY KEY,
+    UserID INT NOT NULL,
+    AccessKey VARCHAR(100) NOT NULL,
+    SecretKeyEncrypted TEXT NOT NULL,
+    EncryptionKeyId VARCHAR(255) NOT NULL,
+    RegionName VARCHAR(100) NOT NULL,
+    FOREIGN KEY (UserID) REFERENCES users(UserID) ON DELETE CASCADE
+);
+
+-- Cloud info table
+CREATE TABLE IF NOT EXISTS cloud_info (
+    InfoID INT AUTO_INCREMENT PRIMARY KEY,
+    UserID INT NOT NULL,
+    EC2_ID VARCHAR(255),
+    S3_ID VARCHAR(255),
+    FOREIGN KEY (UserID) REFERENCES users(UserID) ON DELETE CASCADE
+);
