@@ -34,12 +34,12 @@ To run Orca locally, create a `.env` file in your backend directory and populate
 DB_HOST=localhost
 DB_NAME=orca
 DB_USER=root
-DB_PASS=gord
+DB_PASS=<password>
 
 E_KEY_ID_JWT=
 E_KEY_ID_CLOUD=
 SECRET_NAME=
-E_KEY=
+E_KEY=<fernet encryption key>
 ```
 
 
