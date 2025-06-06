@@ -1,5 +1,5 @@
 # 🐳 Orca: Cloud Data Orchestration
-
+Heavily influences my current project: cli-flow
 Orca is a lightweight cloud orchestration tool designed to simplify the execution of data pipelines on AWS infrastructure. It enables users to upload Python tasks, manage execution order, track logs, and automate AWS resource provisioning—all from a simple and extensible interface.
 
 ## 🚀 Features
